@@ -1,5 +1,6 @@
 import { Text, View } from "@/components/Themed"
 import { auth } from "@/firebaseConfig"
+import React from "react"
 import { StyleSheet, TouchableOpacity } from "react-native"
 
 export default function TabOneScreen() {
