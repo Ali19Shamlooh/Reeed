@@ -1,10 +1,8 @@
-import { StyleSheet, TouchableOpacity } from "react-native"
 import { Text, View } from "@/components/Themed"
-import { auth } from "../../firebaseConfig.js"
-import { getAuth } from "firebase/auth"
+import { auth } from "@/firebaseConfig"
+import { StyleSheet, TouchableOpacity } from "react-native"
 
 export default function TabOneScreen() {
-  getAuth //start Here //video time 3:00 //https://www.youtube.com/watch?v=a0KJ7l5sNGw
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Sign Out</Text>
