@@ -1,7 +1,7 @@
-import { initializeApp } from "firebase/app";
+import { initializeApp } from "firebase/app"
 // 1. Import the specific services you need
-import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import { getAuth } from "firebase/auth"
+import { getFirestore } from "firebase/firestore"
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -10,12 +10,12 @@ const firebaseConfig = {
   projectId: "reeed-0",
   storageBucket: "reeed-0.firebasestorage.app",
   messagingSenderId: "201799859784",
-  appId: "1:201799859784:web:a4eb03aacdeea39188a27d"
-};
+  appId: "1:201799859784:web:a4eb03aacdeea39188a27d",
+}
 
 // Initialize Firebase
-const app = initializeApp(firebaseConfig);
+const app = initializeApp(firebaseConfig)
 
 // 2. Initialize and Export Auth and Firestore so other files can access them
-export const auth = getAuth(app);
-export const db = getFirestore(app);
+export const auth = getAuth(app)
+export const db = getFirestore(app)
