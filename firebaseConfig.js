@@ -1,8 +1,7 @@
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app"
-import { initializeAuth } from "firebase/auth"
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
+import { initializeApp } from "firebase/app";
+// 1. Import the specific services you need
+import { getAuth } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -11,10 +10,12 @@ const firebaseConfig = {
   projectId: "reeed-0",
   storageBucket: "reeed-0.firebasestorage.app",
   messagingSenderId: "201799859784",
-  appId: "1:201799859784:web:a4eb03aacdeea39188a27d",
-}
+  appId: "1:201799859784:web:a4eb03aacdeea39188a27d"
+};
 
 // Initialize Firebase
+const app = initializeApp(firebaseConfig);
 
-export const app = initializeApp(firebaseConfig)
-export const auth = initializeAuth(app)
+// 2. Initialize and Export Auth and Firestore so other files can access them
+export const auth = getAuth(app);
+export const db = getFirestore(app);
