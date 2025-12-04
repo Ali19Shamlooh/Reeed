@@ -1,58 +1,68 @@
+import { Ionicons } from "@expo/vector-icons" // We'll use Ionicons for simplicity
+import { Tabs } from "expo-router"
 import React from "react"
-import FontAwesome from "@expo/vector-icons/FontAwesome"
-import { Link, Tabs } from "expo-router"
-import { Pressable } from "react-native"
+import { Platform } from "react-native"
 
-import Colors from "@/constants/Colors"
-import { useColorScheme } from "@/components/useColorScheme"
-import { useClientOnlyValue } from "@/components/useClientOnlyValue"
-
-// You can explore the built-in icon families and icons on the web at https://icons.expo.fyi/
-function TabBarIcon(props: {
-  name: React.ComponentProps<typeof FontAwesome>["name"]
-  color: string
-}) {
-  return <FontAwesome size={28} style={{ marginBottom: -3 }} {...props} />
-}
+const TAB_ICON_SIZE = 24
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme()
-
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? "light"].tint,
-        // Disable the static render of the header on web
-        // to prevent a hydration error in React Navigation v6.
-        headerShown: useClientOnlyValue(false, true),
+        headerShown: false, // We will manage headers on individual screens
+        tabBarActiveTintColor: "#1e3a8a", // Dark blue for active tab
+        tabBarInactiveTintColor: "#9ca3af", // Gray for inactive tab
+        tabBarStyle: {
+          // Apply a slight shadow or border to lift the tab bar
+          paddingTop: Platform.OS === "ios" ? 10 : 0,
+          paddingBottom: Platform.OS === "ios" ? 20 : 5,
+          height: Platform.OS === "ios" ? 85 : 60,
+        },
       }}
     >
       <Tabs.Screen
-        name="index"
+        name="index" // This is the default screen (Dashboard)
         options={{
-          title: "Home",
-          tabBarIcon: ({ color }) => <TabBarIcon name="code" color={color} />,
-          headerRight: () => (
-            <Link href="/modal" asChild>
-              <Pressable>
-                {({ pressed }) => (
-                  <FontAwesome
-                    name="info-circle"
-                    size={25}
-                    color={Colors[colorScheme ?? "light"].text}
-                    style={{ marginRight: 15, opacity: pressed ? 0.5 : 1 }}
-                  />
-                )}
-              </Pressable>
-            </Link>
+          title: "Dashboard",
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="home-outline" size={TAB_ICON_SIZE} color={color} />
           ),
         }}
       />
       <Tabs.Screen
-        name="two"
+        name="library" // We will create this file next
         options={{
-          title: "Tab Two",
-          tabBarIcon: ({ color }) => <TabBarIcon name="code" color={color} />,
+          title: "Library",
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="book-outline" size={TAB_ICON_SIZE} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="profile" // We will create this file next
+        options={{
+          title: "Profile",
+          tabBarIcon: ({ color }) => (
+            <Ionicons
+              name="person-circle-outline"
+              size={TAB_ICON_SIZE}
+              color={color}
+            />
+          ),
+        }}
+      />
+
+      {/* This is a common pattern in Expo Router:
+        The 'modal' route is not part of the bottom tabs.
+        It will be used for actions like 'Upload Book' (UC-2).
+        The file is named 'upload-book.tsx' but its path is relative to the (tabs) folder.
+      */}
+      <Tabs.Screen
+        name="upload-book"
+        options={{
+          href: null, // Hide this tab from the tab bar
+          headerShown: true,
+          title: "Upload New Book", // Title for the modal header
         }}
       />
     </Tabs>
