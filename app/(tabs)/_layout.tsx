@@ -21,9 +21,9 @@ export default function TabLayout() {
       }}
     >
       <Tabs.Screen
-        name="index" // This is the default screen (Dashboard)
+        name="Home" // This is the default screen (Dashboard)
         options={{
-          title: "Dashboard",
+          title: "Home",
           tabBarIcon: ({ color }) => (
             <Ionicons name="home-outline" size={TAB_ICON_SIZE} color={color} />
           ),
@@ -49,20 +49,6 @@ export default function TabLayout() {
               color={color}
             />
           ),
-        }}
-      />
-
-      {/* This is a common pattern in Expo Router:
-        The 'modal' route is not part of the bottom tabs.
-        It will be used for actions like 'Upload Book' (UC-2).
-        The file is named 'upload-book.tsx' but its path is relative to the (tabs) folder.
-      */}
-      <Tabs.Screen
-        name="upload-book"
-        options={{
-          href: null, // Hide this tab from the tab bar
-          headerShown: true,
-          title: "Upload New Book", // Title for the modal header
         }}
       />
     </Tabs>

@@ -1,66 +1,90 @@
-import { Redirect, Stack } from "expo-router"
-import { onAuthStateChanged } from "firebase/auth"
+import { router } from "expo-router"
+import { onAuthStateChanged, signOut, User } from "firebase/auth"
 import React, { useEffect, useState } from "react"
 import {
   ActivityIndicator,
+  Button,
   SafeAreaView,
   StyleSheet,
   Text,
   View,
 } from "react-native"
-import { auth } from "../firebaseConfig" // Import your initialized auth service
+import { auth } from "../firebaseConfig"
 
-// Import the components we just created
-import LoginComponent from "../components/auth/login"
-import RegisterComponent from "../components/auth/register"
+// FIX: Updated imports to match lowercase filenames shown in your screenshot
+import LoginComponent from "./auth/login"
+import RegisterComponent from "./auth/register"
 
-export default function IndexScreen() {
-  const [user, setUser] = useState<any>(null) // null means checking/logged out, object means logged in
-  const [isLoading, setIsLoading] = useState(true) // Initial load flag
-  const [isLoginView, setIsLoginView] = useState(true) // Toggle between Login and Register
+export default function AppIndex() {
+  // Use 'undefined' to explicitly track when the authentication state check is pending.
+  const [user, setUser] = useState<User | null | undefined>(undefined)
+  const [isRegisterMode, setIsRegisterMode] = useState(false)
 
-  // This useEffect mimics the listener from _layout, but specifically for this index file
-  // to determine if we should redirect the user.
   useEffect(() => {
-    // Listen for auth state changes
+    // Set up the Firebase Auth listener
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      console.log(
+        "Auth State Changed in Index:",
+        currentUser ? "User Logged In" : "User Logged Out"
+      )
       setUser(currentUser)
-      setIsLoading(false)
+
+      if (currentUser) {
+        // User is signed in: Redirect to the dashboard (tabs)
+        // We use replace to prevent back-navigation to the login screen
+        router.replace("/(tabs)")
+      }
+      // If currentUser is null, we stay here and render the Login UI.
     })
 
-    return () => unsubscribe() // Cleanup the listener
+    // Clean up the listener on component unmount
+    return () => unsubscribe()
   }, [])
 
-  // Custom function to toggle between the two forms
-  const toggleView = () => setIsLoginView(!isLoginView)
-
-  // --- RENDERING LOGIC ---
-
-  // 1. Show loading screen while Firebase checks auth status
-  if (isLoading) {
+  // 1. LOADING STATE
+  if (user === undefined) {
     return (
-      <View style={styles.loadingContainer}>
+      <View style={styles.centeredContainer}>
         <ActivityIndicator size="large" color="#1e3a8a" />
-        <Text style={styles.loadingText}>Loading application state...</Text>
+        <Text style={styles.loadingText}>Checking authentication...</Text>
       </View>
     )
   }
 
-  // 2. If user is logged in, redirect them to the main tabs (Dashboard)
+  // 2. AUTHENTICATED STATE (Redirecting)
+  // If user is logged in, show a loader while the router redirects to tabs
   if (user) {
-    // We redirect the user to the default tabs screen
-    return <Redirect href="/(tabs)" />
+    return (
+      <View style={styles.centeredContainer}>
+        <ActivityIndicator size="large" color="#1e3a8a" />
+        <Text style={styles.loadingText}>Redirecting to Dashboard...</Text>
+
+        {/* SAFETY VALVE: If the app gets stuck here or redirects wrongly, this button forces a logout */}
+        <View style={{ marginTop: 20 }}>
+          <Button
+            title="Stuck? Force Logout"
+            color="#ef4444"
+            onPress={() => signOut(auth).then(() => setUser(null))}
+          />
+        </View>
+      </View>
+    )
   }
 
-  // 3. If user is logged out, show the login or register form
+  // 3. UNAUTHENTICATED STATE (Show Login/Register)
+  // If we reach here, user is confirmed to be null (Logged Out).
   return (
-    <SafeAreaView style={styles.mainContainer}>
-      <Stack.Screen options={{ title: "Reeed", headerShown: false }} />
+    <SafeAreaView style={styles.container}>
+      <View style={styles.headerContainer}>
+        {/* Simple text header to confirm you are on the Auth screen */}
+        <Text style={styles.appTitle}>REEED</Text>
+      </View>
+
       <View style={styles.contentContainer}>
-        {isLoginView ? (
-          <LoginComponent onSwitchToRegister={toggleView} />
+        {isRegisterMode ? (
+          <RegisterComponent onSwitchToLogin={() => setIsRegisterMode(false)} />
         ) : (
-          <RegisterComponent onSwitchToLogin={toggleView} />
+          <LoginComponent onSwitchToRegister={() => setIsRegisterMode(true)} />
         )}
       </View>
     </SafeAreaView>
@@ -68,25 +92,36 @@ export default function IndexScreen() {
 }
 
 const styles = StyleSheet.create({
-  loadingContainer: {
+  container: {
     flex: 1,
-    justifyContent: "center",
+    // Using a distinct light blue color to differentiate from Dashboard
+    backgroundColor: "#eff6ff",
+  },
+  headerContainer: {
+    marginTop: 60,
     alignItems: "center",
-    backgroundColor: "#f5f5f5",
   },
-  loadingText: {
-    marginTop: 10,
-    fontSize: 16,
+  appTitle: {
+    fontSize: 32,
+    fontWeight: "bold",
     color: "#1e3a8a",
-  },
-  mainContainer: {
-    flex: 1,
-    backgroundColor: "#e0f2fe", // Light blue background for auth screen
+    letterSpacing: 1,
   },
   contentContainer: {
     flex: 1,
     justifyContent: "center",
-    alignItems: "center",
     padding: 20,
+    paddingBottom: 100, // Push content up slightly
+  },
+  centeredContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#fff",
+  },
+  loadingText: {
+    marginTop: 15,
+    fontSize: 16,
+    color: "#666",
   },
 })

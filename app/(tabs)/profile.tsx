@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons"
-import { Stack } from "expo-router"
+import { Stack, router } from "expo-router"
 import { signOut } from "firebase/auth"
 import { doc, getDoc } from "firebase/firestore"
 import React, { useEffect, useState } from "react"
@@ -26,6 +26,7 @@ interface UserProfile {
 export default function ProfileScreen() {
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
+  const [isLoggingOut, setIsLoggingOut] = useState(false) // New state for logout feedback
   const user = auth.currentUser
 
   // Fetch user data from Firestore
@@ -42,7 +43,6 @@ export default function ProfileScreen() {
         setProfile(docSnap.data() as UserProfile)
       } else {
         console.log("No such document for user!")
-        // Fallback for users registered without initial profile data
         setProfile({
           name: user.displayName || "Reader",
           email: user.email || "N/A",
@@ -63,21 +63,32 @@ export default function ProfileScreen() {
     fetchProfile()
   }, [user])
 
-  // Handle Logout (UC-1 sub-flow)
+  // Handle Logout
   const handleLogout = async () => {
+    // 1. Show loading indicator immediately
+    setIsLoggingOut(true)
     try {
-      await signOut(auth)
-      // auth listener in app/index.tsx handles redirection to login screen
+      // 2. Await the Firebase Sign Out promise
+      await auth.signOut()
+      console.log("Sign out successful. Navigating to root...")
+
+      // 3. Navigate only AFTER sign out is complete
+      router.replace("/")
     } catch (error) {
-      Alert.alert("Error", "Failed to log out.")
+      console.error("Logout error:", error)
+      Alert.alert("Error", "Failed to log out. Please check your connection.")
+      setIsLoggingOut(false) // Stop loading if it failed
     }
   }
 
-  if (loading) {
+  // Show spinner during initial profile load OR during logout process
+  if (loading || isLoggingOut) {
     return (
       <View style={styles.centeredContainer}>
         <ActivityIndicator size="large" color="#1e3a8a" />
-        <Text style={styles.loadingText}>Loading Profile...</Text>
+        <Text style={styles.loadingText}>
+          {isLoggingOut ? "Signing Out..." : "Loading Profile..."}
+        </Text>
       </View>
     )
   }
@@ -115,7 +126,7 @@ export default function ProfileScreen() {
         <Text style={styles.nameText}>{userProfile.name}</Text>
         <Text style={styles.emailText}>{userProfile.email}</Text>
         <Text style={styles.userIdText}>
-          User ID: {user?.uid.substring(0, 12)}...
+          User ID: {user?.uid ? user.uid.substring(0, 12) + "..." : "Guest"}
         </Text>
       </View>
 
@@ -144,11 +155,7 @@ export default function ProfileScreen() {
           color="#0a7ea4"
         />
         <View style={{ marginTop: 15 }}>
-          <Button
-            title="Logout"
-            onPress={handleLogout}
-            color="#ef4444" // Red for cautionary action
-          />
+          <Button title="Logout" onPress={handleLogout} color="#ef4444" />
         </View>
       </View>
     </SafeAreaView>

@@ -18,6 +18,13 @@ interface RegisterComponentProps {
   onSwitchToLogin: () => void
 }
 
+// Simple email validation regex (same as login)
+const validateEmail = (email: string): boolean => {
+  const re =
+    /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+  return re.test(String(email).toLowerCase())
+}
+
 export default function RegisterComponent({
   onSwitchToLogin,
 }: RegisterComponentProps) {
@@ -25,11 +32,23 @@ export default function RegisterComponent({
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
 
   // Function to handle the registration and initial data setup
   const handleRegister = async () => {
-    if (!name || !email || !password) {
-      Alert.alert("Missing Fields", "Please fill in all fields.")
+    setError("") // Clear previous error
+
+    // Client-Side Validation
+    if (!name.trim() || !email.trim() || !password.trim()) {
+      setError("Please fill in all fields.")
+      return
+    }
+    if (!validateEmail(email)) {
+      setError("Please enter a valid email address.")
+      return
+    }
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters long.")
       return
     }
 
@@ -57,10 +76,27 @@ export default function RegisterComponent({
       })
 
       Alert.alert("Success", `Welcome, ${name}! Your account is ready.`)
-      // Success is handled by the onAuthStateChanged listener in _layout.tsx
-    } catch (error: any) {
-      Alert.alert("Registration Failed", error.message)
-      console.error("Registration Error:", error)
+    } catch (firebaseError: any) {
+      // Firebase Error Handling
+      let errorMessage =
+        "An unexpected error occurred during registration. Please try again."
+
+      switch (firebaseError.code) {
+        case "auth/email-already-in-use":
+          errorMessage =
+            "This email address is already in use by another account."
+          break
+        case "auth/invalid-email":
+          errorMessage = "The email address format is invalid."
+          break
+        case "auth/weak-password":
+          errorMessage =
+            "The password is too weak. Please choose a stronger password."
+          break
+        default:
+          console.error("Firebase Registration Error:", firebaseError)
+      }
+      setError(errorMessage)
     } finally {
       setLoading(false)
     }
@@ -73,18 +109,26 @@ export default function RegisterComponent({
         Start tracking your reading journey today.
       </Text>
 
+      {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
       <TextInput
         style={styles.input}
         placeholder="Full Name"
         value={name}
-        onChangeText={setName}
+        onChangeText={(text) => {
+          setName(text)
+          setError("")
+        }} // Clear error on change
         placeholderTextColor="#9ca3af"
       />
       <TextInput
         style={styles.input}
         placeholder="Email"
         value={email}
-        onChangeText={setEmail}
+        onChangeText={(text) => {
+          setEmail(text)
+          setError("")
+        }} // Clear error on change
         keyboardType="email-address"
         autoCapitalize="none"
         placeholderTextColor="#9ca3af"
@@ -93,7 +137,10 @@ export default function RegisterComponent({
         style={styles.input}
         placeholder="Password (min 6 chars)"
         value={password}
-        onChangeText={setPassword}
+        onChangeText={(text) => {
+          setPassword(text)
+          setError("")
+        }} // Clear error on change
         secureTextEntry
         placeholderTextColor="#9ca3af"
       />
@@ -146,6 +193,13 @@ const styles = StyleSheet.create({
     color: "#6b7280",
     textAlign: "center",
     marginBottom: 30,
+  },
+  errorText: {
+    color: "#ef4444",
+    textAlign: "center",
+    marginBottom: 15,
+    fontWeight: "600",
+    paddingHorizontal: 10,
   },
   input: {
     width: "100%",
