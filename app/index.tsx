@@ -32,7 +32,7 @@ export default function AppIndex() {
       if (currentUser) {
         // User is signed in: Redirect to the dashboard (tabs)
         // We use replace to prevent back-navigation to the login screen
-        router.replace("/(tabs)")
+        router.replace("./(tabs)")
       }
       // If currentUser is null, we stay here and render the Login UI.
     })
