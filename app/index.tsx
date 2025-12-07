@@ -12,14 +12,17 @@ import {
 import { auth } from "../firebaseConfig"
 
 // FIX: Updated imports to match lowercase filenames shown in your screenshot
+import ForgotPasswordComponent from "./auth/forgot-password"
 import LoginComponent from "./auth/login"
 import RegisterComponent from "./auth/register"
 
+type ViewState = "login" | "register" | "forgotPassword"
 export default function AppIndex() {
   // Use 'undefined' to explicitly track when the authentication state check is pending.
   const [user, setUser] = useState<User | null | undefined>(undefined)
   const [isRegisterMode, setIsRegisterMode] = useState(false)
 
+  const [viewState, setViewState] = useState<ViewState>("login")
   useEffect(() => {
     // Set up the Firebase Auth listener
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -71,21 +74,41 @@ export default function AppIndex() {
     )
   }
 
+  const renderContent = () => {
+    switch (viewState) {
+      case "register":
+        // Renders Register, provides handler to switch back to Login
+        return (
+          <RegisterComponent onSwitchToLogin={() => setViewState("login")} />
+        )
+      case "forgotPassword":
+        // Renders Forgot Password, provides handler to switch back to Login
+        return (
+          <ForgotPasswordComponent
+            onBackToLogin={() => setViewState("login")}
+          />
+        )
+      case "login":
+      default:
+        return (
+          // Renders Login, provides handlers to switch to Register or Forgot Password
+          <LoginComponent
+            onSwitchToRegister={() => setViewState("register")}
+            onSwitchToForgotPassword={() => setViewState("forgotPassword")}
+          />
+        )
+    }
+  }
   // 3. UNAUTHENTICATED STATE (Show Login/Register)
   // If we reach here, user is confirmed to be null (Logged Out).
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.headerContainer}>
-        {/* Simple text header to confirm you are on the Auth screen */}
-        <Text style={styles.appTitle}>REEED</Text>
+        <Text style={styles.appTitle}>Reeed</Text>
       </View>
 
       <View style={styles.contentContainer}>
-        {isRegisterMode ? (
-          <RegisterComponent onSwitchToLogin={() => setIsRegisterMode(false)} />
-        ) : (
-          <LoginComponent onSwitchToRegister={() => setIsRegisterMode(true)} />
-        )}
+        {renderContent()} {/* Renders the currently active component */}
       </View>
     </SafeAreaView>
   )

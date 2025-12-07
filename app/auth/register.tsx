@@ -11,14 +11,12 @@ import {
   TouchableOpacity,
   View,
 } from "react-native"
-import { auth, db } from "../../firebaseConfig" // Access both services
+import { auth, db } from "../../firebaseConfig"
 
-// Define a type for the component's props
 interface RegisterComponentProps {
   onSwitchToLogin: () => void
 }
 
-// Simple email validation regex (same as login)
 const validateEmail = (email: string): boolean => {
   const re =
     /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
@@ -34,11 +32,9 @@ export default function RegisterComponent({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
 
-  // Function to handle the registration and initial data setup
   const handleRegister = async () => {
-    setError("") // Clear previous error
+    setError("")
 
-    // Client-Side Validation
     if (!name.trim() || !email.trim() || !password.trim()) {
       setError("Please fill in all fields.")
       return
@@ -54,7 +50,6 @@ export default function RegisterComponent({
 
     setLoading(true)
     try {
-      // 1. Create the user in Firebase Auth
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         email,
@@ -62,14 +57,12 @@ export default function RegisterComponent({
       )
       const user = userCredential.user
 
-      // 2. Set the display name
       await updateProfile(user, { displayName: name })
 
-      // 3. Create the initial user document in Firestore (for tracking goals/stats)
       await setDoc(doc(db, "users", user.uid), {
         name: name,
         email: email,
-        readingGoal: 30, // Default pages per day
+        readingGoal: 30,
         currentStreak: 0,
         totalBooksRead: 0,
         createdAt: new Date().toISOString(),
@@ -77,7 +70,6 @@ export default function RegisterComponent({
 
       Alert.alert("Success", `Welcome, ${name}! Your account is ready.`)
     } catch (firebaseError: any) {
-      // Firebase Error Handling
       let errorMessage =
         "An unexpected error occurred during registration. Please try again."
 
@@ -118,7 +110,7 @@ export default function RegisterComponent({
         onChangeText={(text) => {
           setName(text)
           setError("")
-        }} // Clear error on change
+        }}
         placeholderTextColor="#9ca3af"
       />
       <TextInput
@@ -128,7 +120,7 @@ export default function RegisterComponent({
         onChangeText={(text) => {
           setEmail(text)
           setError("")
-        }} // Clear error on change
+        }}
         keyboardType="email-address"
         autoCapitalize="none"
         placeholderTextColor="#9ca3af"
@@ -140,7 +132,7 @@ export default function RegisterComponent({
         onChangeText={(text) => {
           setPassword(text)
           setError("")
-        }} // Clear error on change
+        }}
         secureTextEntry
         placeholderTextColor="#9ca3af"
       />
@@ -149,7 +141,7 @@ export default function RegisterComponent({
         title={loading ? "Creating Account..." : "Register"}
         onPress={handleRegister}
         disabled={loading}
-        color="#0a7ea4" // Secondary action color
+        color="#0a7ea4"
       />
 
       <TouchableOpacity onPress={onSwitchToLogin} style={styles.link}>
