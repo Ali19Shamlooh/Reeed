@@ -8,7 +8,7 @@ import {
   Text,
   View,
 } from "react-native"
-import { auth } from "../firebaseConfig" // Import your initialized auth service
+import { auth } from "../firebaseConfig"; // Import your initialized auth service
 
 // Import the components we just created
 import LoginComponent from "../components/auth/login"
