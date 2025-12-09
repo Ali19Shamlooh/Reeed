@@ -40,39 +40,6 @@ export default function TabLayout() {
           ),
         }}
       />
-
-
-
-      {/* Search */}
-      <Tabs.Screen
-        name="Search"
-        options={{
-          title: "Search",
-          tabBarIcon: ({ color }) => (
-            <Ionicons
-              name="search-outline"
-              size={TAB_ICON_SIZE}
-              color={color}
-            />
-          ),
-        }}
-      />
-      {/* 🔥 Leaderboard */}
-      <Tabs.Screen
-        name="Leaderboard"
-        options={{
-          title: "Leaderboard",
-          tabBarIcon: ({ color }) => (
-            <Ionicons
-              name="trophy-outline"
-              size={TAB_ICON_SIZE}
-              color={color}
-            />
-          ),
-        }}
-      />
-      
-      {/* Profile */}
       <Tabs.Screen
         name="profile"
         options={{
