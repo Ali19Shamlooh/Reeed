@@ -331,7 +331,7 @@ export default function DashboardScreen() {
             styles.secondaryButton,
             { marginTop: 10, opacity: pressed ? 0.8 : 1 },
           ]}
-          onPress={() => console.log("Open all notifications")}
+          onPress={() => router.push("/Notification")}
         >
           <Text style={styles.secondaryButtonText}>View all</Text>
         </Pressable>
