@@ -48,6 +48,13 @@ type Notification = {
   isRead: boolean
   timestamp: string
 }
+  notifId: number
+  userId: number
+  message: string
+  type: string
+  isRead: boolean
+  timestamp: string
+}
 
 type DashboardStats = {
   totalBooksFinished: number
@@ -289,14 +296,8 @@ export default function DashboardScreen() {
             </View>
           ))}
 
-          <Pressable
-            style={({ pressed }) => [
-              styles.secondaryButton,
-              { marginTop: 10, opacity: pressed ? 0.8 : 1 },
-            ]}
-            onPress={() => router.push("/Notification")}
-          >
-            <Text style={styles.secondaryButtonText}>View all</Text>
+          <Pressable onPress={() => router.push("./Notifications")}>
+            <Text>View all</Text>
           </Pressable>
         </View>
       </ScrollView>
