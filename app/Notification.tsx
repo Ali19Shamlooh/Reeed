@@ -3,12 +3,13 @@ import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { useRouter } from "expo-router";
 import React from "react";
 import {
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context"; // 👈 NEW
 
 const PRIMARY_COLOR = "#0a7ea4";
 const BACKGROUND_COLOR = "#F9FAFB";
@@ -60,101 +61,110 @@ export default function NotificationsScreen() {
   const unreadCount = notifications.filter((n) => !n.isRead).length;
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.contentContainer}
+    <SafeAreaView
+      style={styles.safeArea}
+      edges={["top", "left", "right"]} // 👈 keeps away from notch
     >
-      {/* 🔙 Back Button */}
-      <Pressable
-        onPress={() => router.back()}
-        style={({ pressed }) => [
-          styles.backButton,
-          { opacity: pressed ? 0.6 : 1 },
-        ]}
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.contentContainer}
       >
-        <FontAwesome name="chevron-left" size={20} color={TEXT_COLOR} />
-        <Text style={styles.backText}>Back</Text>
-      </Pressable>
-
-      {/* Header */}
-      <View style={styles.header}>
-        <View style={{ flexDirection: "row", alignItems: "center" }}>
-          <Text style={styles.title}>Notifications</Text>
-          {unreadCount > 0 && (
-            <View style={styles.unreadBadge}>
-              <Text style={styles.unreadBadgeText}>{unreadCount}</Text>
-            </View>
-          )}
-        </View>
-        <Text style={styles.subtitle}>
-          Stay updated with your reading progress and app activity.
-        </Text>
-      </View>
-
-      {/* Empty state */}
-      {notifications.length === 0 && (
-        <View style={styles.emptyCard}>
-          <FontAwesome
-            name="bell-o"
-            size={28}
-            color={PRIMARY_COLOR}
-            style={{ marginBottom: 8 }}
-          />
-          <Text style={styles.emptyTitle}>No notifications yet</Text>
-          <Text style={styles.emptyText}>
-            As you read more and use the app, your notifications will appear
-            here.
-          </Text>
-        </View>
-      )}
-
-      {/* Notifications list */}
-      {notifications.map((notif) => (
-        <View
-          key={notif.id}
-          style={[
-            styles.notificationRow,
-            !notif.isRead && styles.notificationUnread,
+        {/* 🔙 Back Button */}
+        <Pressable
+          onPress={() => router.back()}
+          style={({ pressed }) => [
+            styles.backButton,
+            { opacity: pressed ? 0.6 : 1 },
           ]}
         >
-          {/* Icon based on type */}
-          <View style={styles.iconCircle}>
-            {notif.type === "leaderboard" && (
-              <FontAwesome name="trophy" size={16} color="#FFFFFF" />
-            )}
-            {notif.type === "system" && (
-              <FontAwesome name="info" size={16} color="#FFFFFF" />
-            )}
-            {notif.type === "reminder" && (
-              <FontAwesome name="clock-o" size={16} color="#FFFFFF" />
-            )}
-            {notif.type === "achievement" && (
-              <FontAwesome name="star" size={16} color="#FFFFFF" />
+          <FontAwesome name="chevron-left" size={20} color={TEXT_COLOR} />
+          <Text style={styles.backText}>Back</Text>
+        </Pressable>
+
+        {/* Header */}
+        <View style={styles.header}>
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
+            <Text style={styles.title}>Notifications</Text>
+            {unreadCount > 0 && (
+              <View style={styles.unreadBadge}>
+                <Text style={styles.unreadBadgeText}>{unreadCount}</Text>
+              </View>
             )}
           </View>
-
-          <View style={{ flex: 1 }}>
-            <Text
-              style={[
-                styles.notificationMessage,
-                !notif.isRead && styles.notificationMessageUnread,
-              ]}
-            >
-              {notif.message}
-            </Text>
-            <Text style={styles.notificationMeta}>
-              {notif.type} • {notif.timestamp}
-            </Text>
-          </View>
-
-          {!notif.isRead && <View style={styles.unreadDot} />}
+          <Text style={styles.subtitle}>
+            Stay updated with your reading progress and app activity.
+          </Text>
         </View>
-      ))}
-    </ScrollView>
+
+        {/* Empty state */}
+        {notifications.length === 0 && (
+          <View style={styles.emptyCard}>
+            <FontAwesome
+              name="bell-o"
+              size={28}
+              color={PRIMARY_COLOR}
+              style={{ marginBottom: 8 }}
+            />
+            <Text style={styles.emptyTitle}>No notifications yet</Text>
+            <Text style={styles.emptyText}>
+              As you read more and use the app, your notifications will appear
+              here.
+            </Text>
+          </View>
+        )}
+
+        {/* Notifications list */}
+        {notifications.map((notif) => (
+          <View
+            key={notif.id}
+            style={[
+              styles.notificationRow,
+              !notif.isRead && styles.notificationUnread,
+            ]}
+          >
+            {/* Icon based on type */}
+            <View style={styles.iconCircle}>
+              {notif.type === "leaderboard" && (
+                <FontAwesome name="trophy" size={16} color="#FFFFFF" />
+              )}
+              {notif.type === "system" && (
+                <FontAwesome name="info" size={16} color="#FFFFFF" />
+              )}
+              {notif.type === "reminder" && (
+                <FontAwesome name="clock-o" size={16} color="#FFFFFF" />
+              )}
+              {notif.type === "achievement" && (
+                <FontAwesome name="star" size={16} color="#FFFFFF" />
+              )}
+            </View>
+
+            <View style={{ flex: 1 }}>
+              <Text
+                style={[
+                  styles.notificationMessage,
+                  !notif.isRead && styles.notificationMessageUnread,
+                ]}
+              >
+                {notif.message}
+              </Text>
+              <Text style={styles.notificationMeta}>
+                {notif.type} • {notif.timestamp}
+              </Text>
+            </View>
+
+            {!notif.isRead && <View style={styles.unreadDot} />}
+          </View>
+        ))}
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: BACKGROUND_COLOR,
+  },
   container: {
     flex: 1,
     backgroundColor: BACKGROUND_COLOR,
