@@ -20,6 +20,7 @@ const PRIMARY_COLOR = "#0a7ea4";
 const BACKGROUND_COLOR = "#F9FAFB";
 const TEXT_COLOR = "#1F2937";
 
+// Dummy leaderboard data
 const USERS: LeaderboardUser[] = [
   { id: 1, name: "Hodges", pages: 12323 },
   { id: 2, name: "Johnny Rios", pages: 23131 },
@@ -33,15 +34,12 @@ const USERS: LeaderboardUser[] = [
 ];
 
 export default function LeaderboardScreen() {
-  const top3 = USERS.slice(0, 3);
-  const others = USERS.slice(3);
-
   return (
     <ScrollView
       style={styles.container}
       contentContainerStyle={styles.contentContainer}
     >
-      {/* 🔙 Back Button - same style as reviews */}
+      {/* Back Button */}
       <Pressable
         onPress={() => router.back()}
         style={({ pressed }) => [
@@ -53,7 +51,7 @@ export default function LeaderboardScreen() {
         <Text style={styles.backText}>Back</Text>
       </Pressable>
 
-      {/* Header - similar to reviews */}
+      {/* Header */}
       <View style={styles.header}>
         <Text style={styles.title}>Leaderboard</Text>
         <Text style={styles.subtitle}>
@@ -61,39 +59,7 @@ export default function LeaderboardScreen() {
         </Text>
       </View>
 
-      {/* Card: Top 3 section */}
-      <View style={styles.card}>
-        <View style={styles.cardHeaderRow}>
-          <Text style={styles.cardTitle}>Top 3 readers</Text>
-          <FontAwesome name="trophy" size={20} color={PRIMARY_COLOR} />
-        </View>
-
-        <View style={styles.top3Row}>
-          {top3.map((user, index) => {
-            const rank = index + 1;
-            return (
-              <View key={user.id} style={styles.topUserContainer}>
-                <View style={styles.topAvatarCircle}>
-                  <Text style={styles.topAvatarText}>
-                    {user.name.charAt(0)}
-                  </Text>
-                </View>
-                <Text style={styles.topUserName} numberOfLines={1}>
-                  {user.name}
-                </Text>
-                <Text style={styles.topUserPages}>{user.pages} pages</Text>
-                <View style={[styles.rankBadge, rank === 1 && styles.rankBadgeFirst]}>
-                  <Text style={[styles.rankBadgeText, rank === 1 && styles.rankBadgeTextFirst]}>
-                    #{rank}
-                  </Text>
-                </View>
-              </View>
-            );
-          })}
-        </View>
-      </View>
-
-      {/* Card: Full leaderboard list */}
+      {/* 🔥 All Readers Only — Top 3 Removed */}
       <View style={styles.card}>
         <View style={styles.cardHeaderRow}>
           <Text style={styles.cardTitle}>All readers</Text>
@@ -140,7 +106,6 @@ export default function LeaderboardScreen() {
 }
 
 // --- styles ---
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -150,8 +115,6 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingBottom: 40,
   },
-
-  // Back button (same pattern as reviews)
   backButton: {
     flexDirection: "row",
     alignItems: "center",
@@ -163,7 +126,6 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     color: TEXT_COLOR,
   },
-
   header: {
     marginBottom: 12,
   },
@@ -177,7 +139,6 @@ const styles = StyleSheet.create({
     color: "#6B7280",
     marginTop: 2,
   },
-
   card: {
     backgroundColor: "#FFFFFF",
     borderRadius: 16,
@@ -200,62 +161,6 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: TEXT_COLOR,
   },
-
-  // Top 3 section
-  top3Row: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 8,
-  },
-  topUserContainer: {
-    flex: 1,
-    alignItems: "center",
-  },
-  topAvatarCircle: {
-    width: 54,
-    height: 54,
-    borderRadius: 27,
-    backgroundColor: "#E5F3F8",
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 4,
-  },
-  topAvatarText: {
-    fontSize: 22,
-    fontWeight: "700",
-    color: PRIMARY_COLOR,
-  },
-  topUserName: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: TEXT_COLOR,
-    textAlign: "center",
-  },
-  topUserPages: {
-    fontSize: 12,
-    color: "#6B7280",
-    marginTop: 2,
-  },
-  rankBadge: {
-    marginTop: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 999,
-    backgroundColor: "#E5E7EB",
-  },
-  rankBadgeFirst: {
-    backgroundColor: PRIMARY_COLOR,
-  },
-  rankBadgeText: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: "#4B5563",
-  },
-  rankBadgeTextFirst: {
-    color: "#FFFFFF",
-  },
-
-  // List section
   row: {
     flexDirection: "row",
     alignItems: "center",

@@ -22,16 +22,7 @@ type User = {
   name: string;
   email: string;
   avatar?: string;
-  type: "normal" | "admin";
-};
-
-type LeaderBoard = {
-  id: number;
-  userId: number;
-  rank: number;
-  booksFinished: number;
-  totalPages: number;
-  last_updated: string; // datetime as string
+  type: "User" | "admin";
 };
 
 type Book = {
@@ -61,21 +52,9 @@ type Notification = {
   timestamp: string;
 };
 
-type Bookmark = {
-  bookmarkId: number;
-  userId: number;
-  bookId: number;
-  pageNumber: number;
-  timestamp: string;
-};
-
-type Review = {
-  reviewId: number;
-  userId: number;
-  bookId: number;
-  rating: number;
-  reviewText: string;
-  timestamp: string;
+type DashboardStats = {
+  totalBooksFinished: number;
+  totalPagesRead: number;
 };
 
 // --- Screen ---
@@ -90,13 +69,9 @@ export default function DashboardScreen() {
     type: "normal",
   };
 
-  const leaderboard: LeaderBoard = {
-    id: 10,
-    userId: 1,
-    rank: 3,
-    booksFinished: 7,
-    totalPages: 1920,
-    last_updated: "2025-02-04T10:30:00Z",
+  const stats: DashboardStats = {
+    totalBooksFinished: 7,
+    totalPagesRead: 1920,
   };
 
   const currentBook: Book = {
@@ -135,58 +110,20 @@ export default function DashboardScreen() {
     },
   ];
 
-  const bookmarks: (Bookmark & { book: Book })[] = [
-    {
-      bookmarkId: 90,
-      userId: 1,
-      bookId: 100,
-      pageNumber: 120,
-      timestamp: "2025-02-04T09:25:00Z",
-      book: currentBook,
-    },
-    {
-      bookmarkId: 91,
-      userId: 1,
-      bookId: 101,
-      pageNumber: 45,
-      timestamp: "2025-02-02T18:00:00Z",
-      book: {
-        bookId: 101,
-        title: "The Alchemist",
-        author: "Paulo Coelho",
-        category: "Fiction",
-        pageNumber: 200,
-      },
-    },
-  ];
-
-  const latestReview: (Review & { book: Book }) = {
-    reviewId: 300,
-    userId: 1,
-    bookId: 101,
-    rating: 5,
-    reviewText: "Beautiful story with deep meaning.",
-    timestamp: "2025-02-01T20:10:00Z",
-    book: {
-      bookId: 101,
-      title: "The Alchemist",
-      author: "Paulo Coelho",
-      category: "Fiction",
-      pageNumber: 200,
-    },
-  };
-
   const unreadNotificationsCount = notifications.filter((n) => !n.isRead).length;
 
   // Simple reading session duration in minutes
   const sessionMinutes = 25; // from the log above
+
+  // ⬇️ Dummy current page instead of bookmark table
+  const currentPage = 120;
 
   return (
     <ScrollView
       style={styles.container}
       contentContainerStyle={styles.contentContainer}
     >
-      {/* USER + LEADERBOARD SUMMARY */}
+      {/* USER SUMMARY */}
       <View style={styles.card}>
         <View style={styles.cardHeaderRow}>
           <View>
@@ -202,28 +139,24 @@ export default function DashboardScreen() {
 
         <View style={styles.summaryRow}>
           <View style={styles.summaryItem}>
-            <Text style={styles.summaryNumber}>#{leaderboard.rank}</Text>
-            <Text style={styles.summaryLabel}>Leaderboard rank</Text>
-          </View>
-          <View style={styles.summaryItem}>
             <Text style={styles.summaryNumber}>
-              {leaderboard.booksFinished}
+              {stats.totalBooksFinished}
             </Text>
             <Text style={styles.summaryLabel}>Books finished</Text>
           </View>
           <View style={styles.summaryItem}>
             <Text style={styles.summaryNumber}>
-              {leaderboard.totalPages}
+              {stats.totalPagesRead}
             </Text>
             <Text style={styles.summaryLabel}>Total pages read</Text>
           </View>
         </View>
       </View>
 
-      {/* CURRENT READING SESSION (Reading-Logs + Book) */}
+      {/* LAST READING SESSION */}
       <View style={styles.card}>
         <View style={styles.cardHeaderRow}>
-          <Text style={styles.cardTitle}>Current reading session</Text>
+          <Text style={styles.cardTitle}>Last Reading Session</Text>
           <MaterialCommunityIcons
             name="progress-clock"
             size={24}
@@ -240,11 +173,11 @@ export default function DashboardScreen() {
 
         <Text style={styles.infoText}>
           You are on page{" "}
-          <Text style={styles.highlight}>{bookmarks[0].pageNumber}</Text> of{" "}
+          <Text style={styles.highlight}>{currentPage}</Text> of{" "}
           {currentBook.pageNumber}
         </Text>
 
-        {/* Simple progress bar based on bookmark */}
+        {/* Simple progress bar based on current page */}
         <View style={styles.progressBarBackground}>
           <View
             style={[
@@ -252,7 +185,7 @@ export default function DashboardScreen() {
               {
                 width: `${
                   Math.min(
-                    (bookmarks[0].pageNumber / currentBook.pageNumber) * 100,
+                    (currentPage / currentBook.pageNumber) * 100,
                     100
                   ) || 0
                 }%`,
@@ -261,10 +194,7 @@ export default function DashboardScreen() {
           />
         </View>
         <Text style={styles.progressText}>
-          {Math.round(
-            (bookmarks[0].pageNumber / currentBook.pageNumber) * 100
-          )}
-          % completed
+          {Math.round((currentPage / currentBook.pageNumber) * 100)}% completed
         </Text>
 
         <Pressable
@@ -273,7 +203,6 @@ export default function DashboardScreen() {
             { opacity: pressed ? 0.8 : 1 },
           ]}
           onPress={() => {
-            // TODO: navigate to reader with bookId + pageNumber
             console.log("Continue reading bookId:", currentBook.bookId);
           }}
         >
@@ -281,16 +210,12 @@ export default function DashboardScreen() {
         </Pressable>
       </View>
 
-      {/* NOTIFICATIONS (Notification table) */}
+      {/* NOTIFICATIONS */}
       <View style={styles.card}>
         <View style={styles.cardHeaderRow}>
           <Text style={styles.cardTitle}>Notifications</Text>
           <View style={styles.notificationBadgeWrapper}>
-            <FontAwesome
-              name="bell"
-              size={20}
-              color={PRIMARY_COLOR}
-            />
+            <FontAwesome name="bell" size={20} color={PRIMARY_COLOR} />
             {unreadNotificationsCount > 0 && (
               <View style={styles.notificationDot}>
                 <Text style={styles.notificationDotText}>
@@ -319,8 +244,8 @@ export default function DashboardScreen() {
                 {notif.message}
               </Text>
               <Text style={styles.notificationMeta}>
-                Type: {notif.type} •{" "}
-                {notif.isRead ? "Read" : "Unread"}
+                {/* show only the time HH:MM from the timestamp */}
+                {notif.timestamp.substring(11, 16)}
               </Text>
             </View>
           </View>
@@ -331,145 +256,12 @@ export default function DashboardScreen() {
             styles.secondaryButton,
             { marginTop: 10, opacity: pressed ? 0.8 : 1 },
           ]}
-          onPress={() => router.push("/Notification")}
+          onPress={() => router.push("/notifications")}
         >
           <Text style={styles.secondaryButtonText}>View all</Text>
         </Pressable>
       </View>
-
-      {/* BOOKMARKS (Bookmarks + Book) */}
-      <View style={styles.card}>
-        <View style={styles.cardHeaderRow}>
-          <Text style={styles.cardTitle}>Recent bookmarks</Text>
-          <FontAwesome name="bookmark" size={20} color={PRIMARY_COLOR} />
-        </View>
-
-        {bookmarks.map((bm) => (
-          <View key={bm.bookmarkId} style={styles.bookmarkRow}>
-            <View style={styles.bookmarkIconCircle}>
-              <FontAwesome name="book" size={16} color="#FFFFFF" />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.bookmarkTitle} numberOfLines={1}>
-                {bm.book.title}
-              </Text>
-              <Text style={styles.bookmarkMeta}>
-                Page {bm.pageNumber} / {bm.book.pageNumber}
-              </Text>
-            </View>
-            <Pressable
-              style={({ pressed }) => [
-                styles.bookmarkButton,
-                { opacity: pressed ? 0.8 : 1 },
-              ]}
-              onPress={() =>
-                console.log(
-                  "Go to bookmark",
-                  bm.bookId,
-                  "page",
-                  bm.pageNumber
-                )
-              }
-            >
-              <Text style={styles.bookmarkButtonText}>Open</Text>
-            </Pressable>
-          </View>
-        ))}
-      </View>
-
-      {/* LATEST REVIEW (Reviews + Book) */}
-      <View style={styles.card}>
-        <View style={styles.cardHeaderRow}>
-          <Text style={styles.cardTitle}>Your latest review</Text>
-          <FontAwesome name="star" size={20} color={PRIMARY_COLOR} />
-        </View>
-
-        <Text style={styles.bookTitle}>{latestReview.book.title}</Text>
-        <Text style={styles.bookAuthor}>
-          by {latestReview.book.author}
-        </Text>
-
-        <View style={styles.ratingRow}>
-          {Array.from({ length: 5 }).map((_, index) => (
-            <FontAwesome
-              key={index}
-              name={index < latestReview.rating ? "star" : "star-o"}
-              size={18}
-              color={PRIMARY_COLOR}
-            />
-          ))}
-        </View>
-
-        <Text style={styles.reviewText} numberOfLines={3}>
-          “{latestReview.reviewText}”
-        </Text>
-
-        <Pressable
-          style={({ pressed }) => [
-            styles.secondaryButton,
-            { marginTop: 10, opacity: pressed ? 0.8 : 1 },
-          ]}
-          onPress={() => router.push ("/Reviews")}
-        >
-          <Text style={styles.secondaryButtonText}>View all reviews</Text>
-        </Pressable>
-      </View>
-
-      {/* QUICK ACTIONS – mapped to tables/features */}
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Quick actions</Text>
-        <View style={styles.quickActionsRow}>
-          <QuickActionButton
-            icon="book"
-            label="Library"
-            onPress={() => router.push("/(tabs)/library")}
-          />
-          <QuickActionButton
-            icon="list-ol"
-            label="Leaderboard"
-            onPress={() =>
-              router.push("/Leaderboard")
-            }
-          />
-          <QuickActionButton
-            icon="bookmark"
-            label="Bookmarks"
-            onPress={() =>
-              router.push("/Bookmarks")
-            }
-          />
-          <QuickActionButton
-            icon="star"
-            label="Reviews"
-            onPress={() =>
-              router.push("/Reviews")
-            }
-          />
-        </View>
-      </View>
     </ScrollView>
-  );
-}
-
-// Reusable Quick Action Button
-type QuickActionButtonProps = {
-  icon: React.ComponentProps<typeof FontAwesome>["name"];
-  label: string;
-  onPress: () => void;
-};
-
-function QuickActionButton({ icon, label, onPress }: QuickActionButtonProps) {
-  return (
-    <Pressable
-      style={({ pressed }) => [
-        styles.quickActionButton,
-        { opacity: pressed ? 0.8 : 1 },
-      ]}
-      onPress={onPress}
-    >
-      <FontAwesome name={icon} size={20} color={PRIMARY_COLOR} />
-      <Text style={styles.quickActionLabel}>{label}</Text>
-    </Pressable>
   );
 }
 
@@ -626,79 +418,5 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: "#9CA3AF",
     marginTop: 2,
-  },
-  bookmarkRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  bookmarkIconCircle: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: PRIMARY_COLOR,
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 10,
-  },
-  bookmarkTitle: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: TEXT_COLOR,
-  },
-  bookmarkMeta: {
-    fontSize: 12,
-    color: "#6B7280",
-  },
-  bookmarkButton: {
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    borderRadius: 999,
-    backgroundColor: "#E5F3F8",
-    marginLeft: 8,
-  },
-  bookmarkButtonText: {
-    fontSize: 11,
-    fontWeight: "600",
-    color: PRIMARY_COLOR,
-  },
-  ratingRow: {
-    flexDirection: "row",
-    marginTop: 4,
-  },
-  reviewText: {
-    fontSize: 13,
-    color: "#4B5563",
-    marginTop: 8,
-    fontStyle: "italic",
-  },
-  secondaryButton: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 999,
-    paddingVertical: 8,
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-  },
-  secondaryButtonText: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: PRIMARY_COLOR,
-  },
-  quickActionsRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 12,
-  },
-  quickActionButton: {
-    flex: 1,
-    alignItems: "center",
-    paddingVertical: 10,
-  },
-  quickActionLabel: {
-    fontSize: 12,
-    marginTop: 4,
-    color: "#4B5563",
-    textAlign: "center",
   },
 });
