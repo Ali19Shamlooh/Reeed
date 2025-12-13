@@ -9,6 +9,7 @@ import {
   Text,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context"; // 👈 NEW
 
 // Colors
 const PRIMARY_COLOR = "#0a7ea4";
@@ -22,7 +23,7 @@ type User = {
   name: string;
   email: string;
   avatar?: string;
-  type: "User" | "admin";
+  type: "normal" | "admin"; // 👈 changed to match the value you use
 };
 
 type Book = {
@@ -113,161 +114,169 @@ export default function DashboardScreen() {
   const unreadNotificationsCount = notifications.filter((n) => !n.isRead).length;
 
   // Simple reading session duration in minutes
-  const sessionMinutes = 25; // from the log above
+  const sessionMinutes = 25;
 
-  // ⬇️ Dummy current page instead of bookmark table
+  // Dummy current page instead of bookmark table
   const currentPage = 120;
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.contentContainer}
+    <SafeAreaView
+      style={styles.safeArea}
+      edges={["top", "left", "right"]} // 👈 keeps away from notch
     >
-      {/* USER SUMMARY */}
-      <View style={styles.card}>
-        <View style={styles.cardHeaderRow}>
-          <View>
-            <Text style={styles.welcomeText}>
-              Welcome back, {user.name} 👋
-            </Text>
-            <Text style={styles.subText}>
-              Keep climbing the leaderboard and finishing books.
-            </Text>
-          </View>
-          <FontAwesome name="user-circle" size={36} color={PRIMARY_COLOR} />
-        </View>
-
-        <View style={styles.summaryRow}>
-          <View style={styles.summaryItem}>
-            <Text style={styles.summaryNumber}>
-              {stats.totalBooksFinished}
-            </Text>
-            <Text style={styles.summaryLabel}>Books finished</Text>
-          </View>
-          <View style={styles.summaryItem}>
-            <Text style={styles.summaryNumber}>
-              {stats.totalPagesRead}
-            </Text>
-            <Text style={styles.summaryLabel}>Total pages read</Text>
-          </View>
-        </View>
-      </View>
-
-      {/* LAST READING SESSION */}
-      <View style={styles.card}>
-        <View style={styles.cardHeaderRow}>
-          <Text style={styles.cardTitle}>Last Reading Session</Text>
-          <MaterialCommunityIcons
-            name="progress-clock"
-            size={24}
-            color={PRIMARY_COLOR}
-          />
-        </View>
-
-        <Text style={styles.bookTitle}>{currentBook.title}</Text>
-        <Text style={styles.bookAuthor}>by {currentBook.author}</Text>
-
-        <Text style={styles.infoText}>
-          Last session: {sessionMinutes} minutes • {lastReadingLog.pagesRead} pages
-        </Text>
-
-        <Text style={styles.infoText}>
-          You are on page{" "}
-          <Text style={styles.highlight}>{currentPage}</Text> of{" "}
-          {currentBook.pageNumber}
-        </Text>
-
-        {/* Simple progress bar based on current page */}
-        <View style={styles.progressBarBackground}>
-          <View
-            style={[
-              styles.progressBarFill,
-              {
-                width: `${
-                  Math.min(
-                    (currentPage / currentBook.pageNumber) * 100,
-                    100
-                  ) || 0
-                }%`,
-              },
-            ]}
-          />
-        </View>
-        <Text style={styles.progressText}>
-          {Math.round((currentPage / currentBook.pageNumber) * 100)}% completed
-        </Text>
-
-        <Pressable
-          style={({ pressed }) => [
-            styles.primaryButton,
-            { opacity: pressed ? 0.8 : 1 },
-          ]}
-          onPress={() => {
-            console.log("Continue reading bookId:", currentBook.bookId);
-          }}
-        >
-          <Text style={styles.primaryButtonText}>Continue reading</Text>
-        </Pressable>
-      </View>
-
-      {/* NOTIFICATIONS */}
-      <View style={styles.card}>
-        <View style={styles.cardHeaderRow}>
-          <Text style={styles.cardTitle}>Notifications</Text>
-          <View style={styles.notificationBadgeWrapper}>
-            <FontAwesome name="bell" size={20} color={PRIMARY_COLOR} />
-            {unreadNotificationsCount > 0 && (
-              <View style={styles.notificationDot}>
-                <Text style={styles.notificationDotText}>
-                  {unreadNotificationsCount}
-                </Text>
-              </View>
-            )}
-          </View>
-        </View>
-
-        {notifications.map((notif) => (
-          <View
-            key={notif.notifId}
-            style={[
-              styles.notificationRow,
-              !notif.isRead && styles.notificationUnread,
-            ]}
-          >
-            <View style={{ flex: 1 }}>
-              <Text
-                style={[
-                  styles.notificationMessage,
-                  !notif.isRead && styles.notificationMessageUnread,
-                ]}
-              >
-                {notif.message}
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.contentContainer}
+      >
+        {/* USER SUMMARY */}
+        <View style={styles.card}>
+          <View style={styles.cardHeaderRow}>
+            <View>
+              <Text style={styles.welcomeText}>
+                Welcome back, {user.name} 👋
               </Text>
-              <Text style={styles.notificationMeta}>
-                {/* show only the time HH:MM from the timestamp */}
-                {notif.timestamp.substring(11, 16)}
+              <Text style={styles.subText}>
+                Keep climbing the leaderboard and finishing books.
               </Text>
             </View>
+            <FontAwesome name="user-circle" size={36} color={PRIMARY_COLOR} />
           </View>
-        ))}
 
-        <Pressable
-          style={({ pressed }) => [
-            styles.secondaryButton,
-            { marginTop: 10, opacity: pressed ? 0.8 : 1 },
-          ]}
-          onPress={() => router.push("/notifications")}
-        >
-          <Text style={styles.secondaryButtonText}>View all</Text>
-        </Pressable>
-      </View>
-    </ScrollView>
+          <View style={styles.summaryRow}>
+            <View style={styles.summaryItem}>
+              <Text style={styles.summaryNumber}>
+                {stats.totalBooksFinished}
+              </Text>
+              <Text style={styles.summaryLabel}>Books finished</Text>
+            </View>
+            <View style={styles.summaryItem}>
+              <Text style={styles.summaryNumber}>
+                {stats.totalPagesRead}
+              </Text>
+              <Text style={styles.summaryLabel}>Total pages read</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* LAST READING SESSION */}
+        <View style={styles.card}>
+          <View style={styles.cardHeaderRow}>
+            <Text style={styles.cardTitle}>Last Reading Session</Text>
+            <MaterialCommunityIcons
+              name="progress-clock"
+              size={24}
+              color={PRIMARY_COLOR}
+            />
+          </View>
+
+          <Text style={styles.bookTitle}>{currentBook.title}</Text>
+          <Text style={styles.bookAuthor}>by {currentBook.author}</Text>
+
+          <Text style={styles.infoText}>
+            Last session: {sessionMinutes} minutes • {lastReadingLog.pagesRead} pages
+          </Text>
+
+          <Text style={styles.infoText}>
+            You are on page{" "}
+            <Text style={styles.highlight}>{currentPage}</Text> of{" "}
+            {currentBook.pageNumber}
+          </Text>
+
+          {/* Simple progress bar based on current page */}
+          <View style={styles.progressBarBackground}>
+            <View
+              style={[
+                styles.progressBarFill,
+                {
+                  width: `${
+                    Math.min(
+                      (currentPage / currentBook.pageNumber) * 100,
+                      100
+                    ) || 0
+                  }%`,
+                },
+              ]}
+            />
+          </View>
+          <Text style={styles.progressText}>
+            {Math.round((currentPage / currentBook.pageNumber) * 100)}% completed
+          </Text>
+
+          <Pressable
+            style={({ pressed }) => [
+              styles.primaryButton,
+              { opacity: pressed ? 0.8 : 1 },
+            ]}
+            onPress={() => {
+              console.log("Continue reading bookId:", currentBook.bookId);
+            }}
+          >
+            <Text style={styles.primaryButtonText}>Continue reading</Text>
+          </Pressable>
+        </View>
+
+        {/* NOTIFICATIONS */}
+        <View style={styles.card}>
+          <View style={styles.cardHeaderRow}>
+            <Text style={styles.cardTitle}>Notifications</Text>
+            <View style={styles.notificationBadgeWrapper}>
+              <FontAwesome name="bell" size={20} color={PRIMARY_COLOR} />
+              {unreadNotificationsCount > 0 && (
+                <View style={styles.notificationDot}>
+                  <Text style={styles.notificationDotText}>
+                    {unreadNotificationsCount}
+                  </Text>
+                </View>
+              )}
+            </View>
+          </View>
+
+          {notifications.map((notif) => (
+            <View
+              key={notif.notifId}
+              style={[
+                styles.notificationRow,
+                !notif.isRead && styles.notificationUnread,
+              ]}
+            >
+              <View style={{ flex: 1 }}>
+                <Text
+                  style={[
+                    styles.notificationMessage,
+                    !notif.isRead && styles.notificationMessageUnread,
+                  ]}
+                >
+                  {notif.message}
+                </Text>
+                <Text style={styles.notificationMeta}>
+                  {notif.timestamp.substring(11, 16)}
+                </Text>
+              </View>
+            </View>
+          ))}
+
+          <Pressable
+            style={({ pressed }) => [
+              styles.secondaryButton,
+              { marginTop: 10, opacity: pressed ? 0.8 : 1 },
+            ]}
+            onPress={() => router.push("/notifications")}
+          >
+            <Text style={styles.secondaryButtonText}>View all</Text>
+          </Pressable>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 // --- Styles ---
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: BACKGROUND_COLOR,
+  },
   container: {
     flex: 1,
     backgroundColor: BACKGROUND_COLOR,
