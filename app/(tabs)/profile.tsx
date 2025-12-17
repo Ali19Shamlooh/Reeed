@@ -1,6 +1,5 @@
 import { Ionicons } from "@expo/vector-icons"
 import { Stack, router } from "expo-router"
-import { signOut } from "firebase/auth"
 import { doc, getDoc } from "firebase/firestore"
 import React, { useEffect, useState } from "react"
 import {
@@ -21,6 +20,7 @@ interface UserProfile {
   readingGoal: number
   currentStreak: number
   totalBooksRead: number
+  type?: "normal" | "admin" 
 }
 
 export default function ProfileScreen() {
@@ -49,6 +49,7 @@ export default function ProfileScreen() {
           readingGoal: 0,
           currentStreak: 0,
           totalBooksRead: 0,
+          type: "normal", // 👈 default type if no doc
         })
       }
     } catch (error) {
@@ -65,19 +66,15 @@ export default function ProfileScreen() {
 
   // Handle Logout
   const handleLogout = async () => {
-    // 1. Show loading indicator immediately
     setIsLoggingOut(true)
     try {
-      // 2. Await the Firebase Sign Out promise
       await auth.signOut()
       console.log("Sign out successful. Navigating to root...")
-
-      // 3. Navigate only AFTER sign out is complete
       router.replace("/")
     } catch (error) {
       console.error("Logout error:", error)
       Alert.alert("Error", "Failed to log out. Please check your connection.")
-      setIsLoggingOut(false) // Stop loading if it failed
+      setIsLoggingOut(false)
     }
   }
 
@@ -93,12 +90,13 @@ export default function ProfileScreen() {
     )
   }
 
-  const userProfile = profile || {
+  const userProfile: UserProfile = profile || {
     name: user?.displayName || "Reader",
     email: user?.email || "N/A",
     readingGoal: 0,
     currentStreak: 0,
     totalBooksRead: 0,
+    type: "normal", // 👈 fallback default type
   }
 
   return (
@@ -109,14 +107,21 @@ export default function ProfileScreen() {
           headerShown: true,
           headerLargeTitle: true,
           headerRight: () => (
-            <Ionicons
-              name="settings-outline"
-              size={24}
-              color="#1e3a8a"
-              onPress={() =>
-                Alert.alert("Settings", "Settings screen coming soon!")
-              }
-            />
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              {/* 👇 Role badge next to settings */}
+              <Text style={styles.roleBadge}>
+                {userProfile.type === "admin" ? "Admin" : "User"}
+              </Text>
+
+              <Ionicons
+                name="settings-outline"
+                size={24}
+                color="#1e3a8a"
+                onPress={() =>
+                  Alert.alert("Settings", "Settings screen coming soon!")
+                }
+              />
+            </View>
           ),
         }}
       />
@@ -239,5 +244,16 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#333",
     marginBottom: 10,
+  },
+  roleBadge: {
+    marginRight: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: "#1e3a8a",
+    color: "#1e3a8a",
+    fontSize: 12,
+    fontWeight: "600",
   },
 })
