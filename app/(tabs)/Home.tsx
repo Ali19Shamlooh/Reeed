@@ -1,7 +1,6 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { router } from "expo-router";
-import React from "react";
 import React, { useEffect, useState } from "react"
 import {
   Pressable,
@@ -323,6 +322,7 @@ export default function DashboardScreen() {
     </SafeAreaView>
   );
 }
+}
 
 // --- Styles ---
 
@@ -482,4 +482,5 @@ const styles = StyleSheet.create({
     color: "#9CA3AF",
     marginTop: 2,
   },
-});
+})
+
