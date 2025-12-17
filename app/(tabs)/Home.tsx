@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, { useEffect, useState } from "react"
 import {
   ActivityIndicator,
   Alert,
@@ -12,8 +12,40 @@ import {
 import { addDoc, collection } from "firebase/firestore"
 import { db } from "../../firebaseConfig"
 
+const userId = 1 //to be change
+
 export default function HomeScreen() {
   const [loading, setLoading] = useState(false)
+  const [statics, setStatics] = useState("")
+  const [error, setError] = useState(null)
+
+  useEffect(() => {
+    const fetchStatics = async () => {
+      try {
+        setLoading(true)
+        const response = await fetch(
+          `http://localhost/reeed/getFinishedBooks.php?userId=${userId}`
+        )
+
+        if (!response.ok) {
+          throw new Error(`HTTP error`)
+        }
+
+        const data = await response.json()
+
+        if (data.error) {
+          throw new Error("error")
+        }
+
+        setStatics(data)
+      } catch (err) {
+        setError(err.message)
+        console.log(err)
+      }
+    }
+
+    fetchStatics()
+  }, [])
 
   const addTestBook = async () => {
     setLoading(true)
