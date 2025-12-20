@@ -1,119 +1,99 @@
-import { MaterialCommunityIcons } from "@expo/vector-icons";
-import FontAwesome from "@expo/vector-icons/FontAwesome";
-import { router } from "expo-router";
+import { MaterialCommunityIcons } from "@expo/vector-icons"
+import FontAwesome from "@expo/vector-icons/FontAwesome"
+import { router } from "expo-router"
 import React, { useEffect, useState } from "react"
-import {
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context"; // 👈 NEW
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native"
+import { SafeAreaView } from "react-native-safe-area-context" // 👈 NEW
+
+const userId = 1
 
 // Colors
-const PRIMARY_COLOR = "#0a7ea4";
-const BACKGROUND_COLOR = "#F9FAFB";
-const TEXT_COLOR = "#1F2937";
+const PRIMARY_COLOR = "#0a7ea4"
+const BACKGROUND_COLOR = "#F9FAFB"
+const TEXT_COLOR = "#1F2937"
 
 // --- Types matching your ERD ---
 
 type User = {
-  userId: number;
-  name: string;
-  email: string;
-  avatar?: string;
-  type: "normal" | "admin"; // 👈 changed to match the value you use
-};
+  userId: number
+  name: string
+  email: string
+  avatar?: string
+  type: "normal" | "admin" // 👈 changed to match the value you use
+}
 
 type Book = {
-  bookId: number;
-  title: string;
-  author: string;
-  category: string;
-  cover?: string;
-  pageNumber: number;
-};
+  bookId: number
+  title: string
+  author: string
+  category: string
+  cover?: string
+  pageNumber: number
+}
 
 type ReadingLog = {
-  logId: number;
-  userId: number;
-  bookId: number;
-  startTime: string;
-  endTime: string;
-  pagesRead: number;
-};
+  logId: number
+  userId: number
+  bookId: number
+  startTime: string
+  endTime: string
+  pagesRead: number
+}
 
 type Notification = {
-  notifId: number;
-  userId: number;
-  message: string;
-  type: string;
-  isRead: boolean;
-  timestamp: string;
-};
+  notifId: number
+  userId: number
+  message: string
+  type: string
+  isRead: boolean
+  timestamp: string
+}
 
 type DashboardStats = {
-  totalBooksFinished: number;
-  totalPagesRead: number;
-};
+  totalBooksFinished: number
+  totalPagesRead: number
+}
 
 // --- Screen ---
 
-export default function HomeScreen() {
+export default function DashboardScreen() {
   const [loading, setLoading] = useState(false)
   const [statics, setStatics] = useState("")
-  const [error, setError] = useState(null)
+  const [error, setError] = useState("")
+  const [lastSessionData, setLastSessionData] = useState("")
 
   useEffect(() => {
-    const fetchStatics = async () => {
+    const fetchData = async () => {
       try {
+        const urls = [
+          `http://localhost/reeed/getFinishedBooks.php?userId=${userId}`,
+          `http://localhost/reeed/getLastReadinSession.php?userId=${userId}`,
+        ]
+
         setLoading(true)
-        const response = await fetch(
-          `http://localhost/reeed/getFinishedBooks.php?userId=${userId}`
+        const responses = await Promise.all(urls.map((url) => fetch(url)))
+
+        for (const response of responses) {
+          if (!response.ok) {
+            throw new Error(`HTTP error`)
+          }
+        }
+
+        const [finishedBooksData, sessionData] = await Promise.all(
+          responses.map((response) => response.json())
         )
 
-        if (!response.ok) {
-          throw new Error(`HTTP error`)
-        }
-
-        const data = await response.json()
-
-        if (data.error) {
-          throw new Error("error")
-        }
-
-        setStatics(data)
+        setStatics(finishedBooksData)
+        setLastSessionData(sessionData)
+        setLoading(false)
       } catch (err) {
         setError(err.message)
         console.log(err)
       }
     }
-
-    fetchStatics()
+    fetchData()
   }, [])
 
-  const addTestBook = async () => {
-    setLoading(true)
-    try {
-      // Try to add a fake book to a 'books' collection
-      const docRef = await addDoc(collection(db, "books"), {
-        title: "Test Book Entry",
-        author: "Reeed Admin",
-        timestamp: new Date().toISOString(),
-      })
-      Alert.alert("Success!", `Book saved with ID: ${docRef.id}`)
-    } catch (error: any) {
-      console.error(error)
-      Alert.alert(
-        "Error",
-        "Could not connect to database. Check console for details."
-      )
-    } finally {
-      setLoading(false)
-    }
-  }
-export default function DashboardScreen() {
   // Dummy data mapped to your ERD
 
   const user: User = {
@@ -121,12 +101,12 @@ export default function DashboardScreen() {
     name: "Hassan",
     email: "hassan@example.com",
     type: "normal",
-  };
+  }
 
   const stats: DashboardStats = {
     totalBooksFinished: 7,
     totalPagesRead: 1920,
-  };
+  }
 
   const currentBook: Book = {
     bookId: 100,
@@ -134,7 +114,7 @@ export default function DashboardScreen() {
     author: "James Clear",
     category: "Self-Help",
     pageNumber: 280,
-  };
+  }
 
   const lastReadingLog: ReadingLog = {
     logId: 501,
@@ -143,7 +123,7 @@ export default function DashboardScreen() {
     startTime: "2025-02-04T09:00:00Z",
     endTime: "2025-02-04T09:25:00Z",
     pagesRead: 18,
-  };
+  }
 
   const notifications: Notification[] = [
     {
@@ -162,15 +142,15 @@ export default function DashboardScreen() {
       isRead: true,
       timestamp: "2025-02-03T15:10:00Z",
     },
-  ];
+  ]
 
-  const unreadNotificationsCount = notifications.filter((n) => !n.isRead).length;
+  const unreadNotificationsCount = notifications.filter((n) => !n.isRead).length
 
   // Simple reading session duration in minutes
-  const sessionMinutes = 25;
+  const sessionMinutes = lastSessionData.period
 
   // Dummy current page instead of bookmark table
-  const currentPage = 120;
+  const currentPage = 120
 
   return (
     <SafeAreaView
@@ -186,7 +166,7 @@ export default function DashboardScreen() {
           <View style={styles.cardHeaderRow}>
             <View>
               <Text style={styles.welcomeText}>
-                Welcome back, {user.name} 👋
+                Welcome back, {statics.userName} 👋
               </Text>
               <Text style={styles.subText}>
                 Keep climbing the leaderboard and finishing books.
@@ -197,15 +177,11 @@ export default function DashboardScreen() {
 
           <View style={styles.summaryRow}>
             <View style={styles.summaryItem}>
-              <Text style={styles.summaryNumber}>
-                {stats.totalBooksFinished}
-              </Text>
+              <Text style={styles.summaryNumber}>{statics.finishedBooks}</Text>
               <Text style={styles.summaryLabel}>Books finished</Text>
             </View>
             <View style={styles.summaryItem}>
-              <Text style={styles.summaryNumber}>
-                {stats.totalPagesRead}
-              </Text>
+              <Text style={styles.summaryNumber}>{statics.PagesRead}</Text>
               <Text style={styles.summaryLabel}>Total pages read</Text>
             </View>
           </View>
@@ -222,17 +198,18 @@ export default function DashboardScreen() {
             />
           </View>
 
-          <Text style={styles.bookTitle}>{currentBook.title}</Text>
-          <Text style={styles.bookAuthor}>by {currentBook.author}</Text>
+          <Text style={styles.bookTitle}>{lastSessionData.title}</Text>
+          <Text style={styles.bookAuthor}>by {lastSessionData.author}</Text>
 
           <Text style={styles.infoText}>
-            Last session: {sessionMinutes} minutes • {lastReadingLog.pagesRead} pages
+            Last session: {sessionMinutes} minutes • {lastSessionData.pagesRead}{" "}
+            pages
           </Text>
 
           <Text style={styles.infoText}>
             You are on page{" "}
-            <Text style={styles.highlight}>{currentPage}</Text> of{" "}
-            {currentBook.pageNumber}
+            <Text style={styles.highlight}>{lastSessionData.pageNumber}</Text>{" "}
+            of {lastSessionData.pageCount}
           </Text>
 
           {/* Simple progress bar based on current page */}
@@ -243,7 +220,8 @@ export default function DashboardScreen() {
                 {
                   width: `${
                     Math.min(
-                      (currentPage / currentBook.pageNumber) * 100,
+                      (lastSessionData.pageNumber / lastSessionData.pageCount) *
+                        100,
                       100
                     ) || 0
                   }%`,
@@ -252,7 +230,10 @@ export default function DashboardScreen() {
             />
           </View>
           <Text style={styles.progressText}>
-            {Math.round((currentPage / currentBook.pageNumber) * 100)}% completed
+            {Math.round(
+              (lastSessionData.pageNumber / lastSessionData.pageCount) * 100
+            )}
+            % completed
           </Text>
 
           <Pressable
@@ -261,7 +242,7 @@ export default function DashboardScreen() {
               { opacity: pressed ? 0.8 : 1 },
             ]}
             onPress={() => {
-              console.log("Continue reading bookId:", currentBook.bookId);
+              console.log("Continue reading bookId:", currentBook.bookId)
             }}
           >
             <Text style={styles.primaryButtonText}>Continue reading</Text>
@@ -320,8 +301,7 @@ export default function DashboardScreen() {
         </View>
       </ScrollView>
     </SafeAreaView>
-  );
-}
+  )
 }
 
 // --- Styles ---
@@ -483,4 +463,3 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
 })
-
