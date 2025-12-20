@@ -3,7 +3,7 @@ import FontAwesome from "@expo/vector-icons/FontAwesome"
 import { router } from "expo-router"
 import React, { useEffect, useState } from "react"
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native"
-import { SafeAreaView } from "react-native-safe-area-context" // 👈 NEW
+import { SafeAreaView } from "react-native-safe-area-context"
 
 const userId = 1
 
@@ -13,6 +13,38 @@ const BACKGROUND_COLOR = "#F9FAFB"
 const TEXT_COLOR = "#1F2937"
 
 // --- Types matching your ERD ---
+export type BookmarkItem = {
+  id: number | string
+  bookTitle: string
+  currentPage: number
+  totalPages: number
+}
+export type BookmarksCardProps = {
+  bookmarks?: BookmarkItem[]
+  onOpenBookmark?: (bookmark: BookmarkItem) => void
+}
+
+// ---- DUMMY DATA ADDED HERE ----
+const dummyBookmarks: BookmarkItem[] = [
+  {
+    id: 1,
+    bookTitle: "Atomic Habits",
+    currentPage: 120,
+    totalPages: 280,
+  },
+  {
+    id: 2,
+    bookTitle: "The Alchemist",
+    currentPage: 45,
+    totalPages: 200,
+  },
+  {
+    id: 3,
+    bookTitle: "Rich Dad Poor Dad",
+    currentPage: 72,
+    totalPages: 207,
+  },
+]
 
 type User = {
   userId: number
@@ -56,7 +88,10 @@ type DashboardStats = {
 
 // --- Screen ---
 
-export default function DashboardScreen() {
+export default function DashboardScreen({
+  bookmarks = dummyBookmarks, // default dummy
+  onOpenBookmark,
+}: BookmarksCardProps) {
   const [loading, setLoading] = useState(false)
   const [statics, setStatics] = useState("")
   const [error, setError] = useState("")
@@ -96,35 +131,6 @@ export default function DashboardScreen() {
 
   // Dummy data mapped to your ERD
 
-  const user: User = {
-    userId: 1,
-    name: "Hassan",
-    email: "hassan@example.com",
-    type: "normal",
-  }
-
-  const stats: DashboardStats = {
-    totalBooksFinished: 7,
-    totalPagesRead: 1920,
-  }
-
-  const currentBook: Book = {
-    bookId: 100,
-    title: "Atomic Habits",
-    author: "James Clear",
-    category: "Self-Help",
-    pageNumber: 280,
-  }
-
-  const lastReadingLog: ReadingLog = {
-    logId: 501,
-    userId: 1,
-    bookId: 100,
-    startTime: "2025-02-04T09:00:00Z",
-    endTime: "2025-02-04T09:25:00Z",
-    pagesRead: 18,
-  }
-
   const notifications: Notification[] = [
     {
       notifId: 1,
@@ -147,7 +153,7 @@ export default function DashboardScreen() {
   const unreadNotificationsCount = notifications.filter((n) => !n.isRead).length
 
   // Simple reading session duration in minutes
-  const sessionMinutes = lastSessionData.period
+  const sessionMinutes = (lastSessionData as any).period
 
   // Dummy current page instead of bookmark table
   const currentPage = 120
@@ -157,10 +163,7 @@ export default function DashboardScreen() {
       style={styles.safeArea}
       edges={["top", "left", "right"]} // 👈 keeps away from notch
     >
-      <ScrollView
-        style={styles.container}
-        contentContainerStyle={styles.contentContainer}
-      >
+      <ScrollView>
         {/* USER SUMMARY */}
         <View style={styles.card}>
           <View style={styles.cardHeaderRow}>
@@ -172,7 +175,13 @@ export default function DashboardScreen() {
                 Keep climbing the leaderboard and finishing books.
               </Text>
             </View>
-            <FontAwesome name="user-circle" size={36} color={PRIMARY_COLOR} />
+            <Pressable
+              onPress={() => {
+                console.log("Go to profile page")
+              }}
+            >
+              <FontAwesome name="user-circle" size={36} color={PRIMARY_COLOR} />
+            </Pressable>
           </View>
 
           <View style={styles.summaryRow}>
@@ -242,11 +251,48 @@ export default function DashboardScreen() {
               { opacity: pressed ? 0.8 : 1 },
             ]}
             onPress={() => {
-              console.log("Continue reading bookId:", currentBook.bookId)
+              console.log(
+                "Continue reading bookId:",
+                (lastSessionData as any).bookId
+              )
             }}
           >
             <Text style={styles.primaryButtonText}>Continue reading</Text>
           </Pressable>
+        </View>
+
+        <View style={styles.card}>
+          <View style={styles.headerRow}>
+            <Text style={styles.title}>Recent bookmarks</Text>
+            <FontAwesome name="bookmark" size={20} color={PRIMARY_COLOR} />
+          </View>
+
+          {bookmarks.map((bm) => (
+            <View key={bm.id} style={styles.bookmarkRow}>
+              <View style={styles.iconCircle}>
+                <FontAwesome name="book" size={16} color="#FFFFFF" />
+              </View>
+
+              <View style={{ flex: 1 }}>
+                <Text style={styles.bookTitle} numberOfLines={1}>
+                  {bm.bookTitle}
+                </Text>
+                <Text style={styles.meta}>
+                  Page {bm.currentPage} / {bm.totalPages}
+                </Text>
+              </View>
+
+              <Pressable
+                style={({ pressed }) => [
+                  styles.openButton,
+                  { opacity: pressed ? 0.8 : 1 },
+                ]}
+                onPress={() => onOpenBookmark && onOpenBookmark(bm)}
+              >
+                <Text style={styles.openButtonText}>Open</Text>
+              </Pressable>
+            </View>
+          ))}
         </View>
 
         {/* NOTIFICATIONS */}
@@ -461,5 +507,52 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: "#9CA3AF",
     marginTop: 2,
+  },
+
+  headerRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: TEXT_COLOR,
+  },
+  bookmarkRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  iconCircle: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: PRIMARY_COLOR,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 10,
+  },
+  meta: {
+    fontSize: 12,
+    color: "#6B7280",
+  },
+  openButton: {
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 999,
+    backgroundColor: "#E5F3F8",
+    marginLeft: 8,
+  },
+  openButtonText: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: PRIMARY_COLOR,
+  },
+  emptyText: {
+    fontSize: 13,
+    color: "#6B7280",
+    marginTop: 4,
   },
 })
