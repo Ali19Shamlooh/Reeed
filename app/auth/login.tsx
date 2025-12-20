@@ -1,4 +1,3 @@
-import { router } from "expo-router"
 import { signInWithEmailAndPassword } from "firebase/auth"
 import React, { useState } from "react"
 import {
@@ -10,14 +9,14 @@ import {
   TouchableOpacity,
   View,
 } from "react-native"
-import { auth } from "../../firebaseConfig" // Access the auth instance
+import { auth } from "../../firebaseConfig"
 
-// Define a type for the component's props
+// [UPDATE] Accepts props to handle switching to Register and Forgot Password views
 interface LoginComponentProps {
   onSwitchToRegister: () => void
+  onSwitchToForgotPassword: () => void
 }
 
-// Simple email validation regex
 const validateEmail = (email: string): boolean => {
   const re =
     /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
@@ -26,15 +25,15 @@ const validateEmail = (email: string): boolean => {
 
 export default function LoginComponent({
   onSwitchToRegister,
+  onSwitchToForgotPassword,
 }: LoginComponentProps) {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
 
-  // Handle the login process
   const handleLogin = async () => {
-    setError("") // Clear previous error
+    setError("")
 
     // Client-Side Validation
     if (!email.trim() || !password.trim()) {
@@ -49,14 +48,14 @@ export default function LoginComponent({
     setLoading(true)
     try {
       await signInWithEmailAndPassword(auth, email, password)
-      // Success is handled by the onAuthStateChanged listener in app/index.tsx
+      // Success triggers listener in app/index.tsx for redirection
     } catch (firebaseError: any) {
       // Firebase Error Handling (Mapping common codes to friendly messages)
       let errorMessage = "An unexpected error occurred. Please try again."
-
       switch (firebaseError.code) {
         case "auth/user-not-found":
         case "auth/wrong-password":
+        case "auth/invalid-credential":
           errorMessage = "Invalid email or password."
           break
         case "auth/invalid-email":
@@ -71,7 +70,6 @@ export default function LoginComponent({
       setError(errorMessage)
     } finally {
       setLoading(false)
-      router.navigate("../(tabs)/Home")
     }
   }
 
@@ -91,7 +89,7 @@ export default function LoginComponent({
         onChangeText={(text) => {
           setEmail(text)
           setError("")
-        }} // Clear error on change
+        }}
         keyboardType="email-address"
         autoCapitalize="none"
         placeholderTextColor="#9ca3af"
@@ -103,7 +101,7 @@ export default function LoginComponent({
         onChangeText={(text) => {
           setPassword(text)
           setError("")
-        }} // Clear error on change
+        }}
         secureTextEntry
         placeholderTextColor="#9ca3af"
       />
@@ -112,8 +110,16 @@ export default function LoginComponent({
         title={loading ? "Logging in..." : "Login"}
         onPress={handleLogin}
         disabled={loading}
-        color="#1e3a8a" // Primary brand color
+        color="#1e3a8a"
       />
+
+      {/* [NEW LINK] Calls the prop handler to switch the view state in app/index.tsx */}
+      <TouchableOpacity
+        onPress={onSwitchToForgotPassword}
+        style={styles.forgotLink}
+      >
+        <Text style={styles.forgotText}>Forgot Password?</Text>
+      </TouchableOpacity>
 
       <TouchableOpacity onPress={onSwitchToRegister} style={styles.link}>
         <Text style={styles.linkText}>Don't have an account? Register Now</Text>
@@ -174,8 +180,17 @@ const styles = StyleSheet.create({
     backgroundColor: "#f9fafb",
     color: "#374151",
   },
+  forgotLink: {
+    alignSelf: "flex-end",
+    marginTop: 10,
+    marginBottom: 20,
+  },
+  forgotText: {
+    color: "#6b7280",
+    fontSize: 14,
+  },
   link: {
-    marginTop: 20,
+    marginTop: 10,
     padding: 5,
     alignSelf: "center",
   },

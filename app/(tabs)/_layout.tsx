@@ -30,7 +30,7 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="library" // We will create this file next
+        name="library"
         options={{
           title: "Library",
           tabBarIcon: ({ color }) => (
@@ -39,7 +39,7 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="profile" // We will create this file next
+        name="profile"
         options={{
           title: "Profile",
           tabBarIcon: ({ color }) => (
