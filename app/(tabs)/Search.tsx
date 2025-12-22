@@ -3,15 +3,15 @@ import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import {
-  ActivityIndicator,
-  Image,
-  Keyboard,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
+    ActivityIndicator,
+    Image,
+    Keyboard,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -135,7 +135,7 @@ export default function SearchTabScreen() {
   };
 
   const openUser = (u: UserResult) => {
-    router.push({ pathname: "/userDetails", params: { id: u.id } });
+    router.push({ pathname: "/userdetails", params: { id: u.id } });
   };
 
   return (
