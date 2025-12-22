@@ -1,27 +1,27 @@
-import { Ionicons } from "@expo/vector-icons" // We'll use Ionicons for simplicity
-import { Tabs } from "expo-router"
-import React from "react"
-import { Platform } from "react-native"
+import { Ionicons } from "@expo/vector-icons";
+import { Tabs } from "expo-router";
+import React from "react";
+import { Platform } from "react-native";
 
-const TAB_ICON_SIZE = 24
+const TAB_ICON_SIZE = 24;
 
 export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        headerShown: false, // We will manage headers on individual screens
-        tabBarActiveTintColor: "#1e3a8a", // Dark blue for active tab
-        tabBarInactiveTintColor: "#9ca3af", // Gray for inactive tab
+        headerShown: false,
+        tabBarActiveTintColor: "#1e3a8a",
+        tabBarInactiveTintColor: "#9ca3af",
         tabBarStyle: {
-          // Apply a slight shadow or border to lift the tab bar
           paddingTop: Platform.OS === "ios" ? 10 : 0,
           paddingBottom: Platform.OS === "ios" ? 20 : 5,
           height: Platform.OS === "ios" ? 85 : 60,
         },
       }}
     >
+      {/* Dashboard */}
       <Tabs.Screen
-        name="Home" // This is the default screen (Dashboard)
+        name="Home"
         options={{
           title: "Home",
           tabBarIcon: ({ color }) => (
@@ -29,6 +29,8 @@ export default function TabLayout() {
           ),
         }}
       />
+
+      {/* Library */}
       <Tabs.Screen
         name="library"
         options={{
@@ -38,6 +40,39 @@ export default function TabLayout() {
           ),
         }}
       />
+
+
+
+      {/* Search */}
+      <Tabs.Screen
+        name="Search"
+        options={{
+          title: "Search",
+          tabBarIcon: ({ color }) => (
+            <Ionicons
+              name="search-outline"
+              size={TAB_ICON_SIZE}
+              color={color}
+            />
+          ),
+        }}
+      />
+      {/* 🔥 Leaderboard */}
+      <Tabs.Screen
+        name="Leaderboard"
+        options={{
+          title: "Leaderboard",
+          tabBarIcon: ({ color }) => (
+            <Ionicons
+              name="trophy-outline"
+              size={TAB_ICON_SIZE}
+              color={color}
+            />
+          ),
+        }}
+      />
+      
+      {/* Profile */}
       <Tabs.Screen
         name="profile"
         options={{
@@ -52,5 +87,5 @@ export default function TabLayout() {
         }}
       />
     </Tabs>
-  )
+  );
 }

@@ -1,15 +1,17 @@
+// app/(tabs)/search.tsx  (or whatever your file name is)
 import FontAwesome from "@expo/vector-icons/FontAwesome";
-import React, { useMemo, useState } from "react";
+import { router } from "expo-router";
+import React, { useState } from "react";
 import {
-    ActivityIndicator,
-    Image,
-    Keyboard,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
+  ActivityIndicator,
+  Image,
+  Keyboard,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -17,79 +19,123 @@ const PRIMARY_COLOR = "#0a7ea4";
 const BACKGROUND_COLOR = "#F9FAFB";
 const TEXT_COLOR = "#1F2937";
 
-type SearchMode = "title" | "author";
+// ✅ change this
+const API_BASE_URL = "https://YOUR-DOMAIN.com/api";
+
+type Mode = "title" | "author" | "users";
 
 type BookResult = {
   id: string;
   title: string;
+  authors: string;
   thumbnail?: string | null;
 };
 
+type UserResult = {
+  id: string; // userId from MySQL
+  name: string;
+  email: string;
+  type: string; // admin/normal
+};
+
 export default function SearchTabScreen() {
-  const [mode, setMode] = useState<SearchMode>("title");
+  const [mode, setMode] = useState<Mode>("title");
   const [query, setQuery] = useState("");
 
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [results, setResults] = useState<BookResult[]>([]);
 
-  const placeholder = useMemo(() => {
-    return mode === "title"
-      ? "Search by book title..."
-      : "Search by author name...";
-  }, [mode]);
+  const [bookResults, setBookResults] = useState<BookResult[]>([]);
+  const [userResults, setUserResults] = useState<UserResult[]>([]);
 
-  const buildGoogleBooksQuery = (m: SearchMode, q: string) => {
-    const clean = q.trim();
-    // Google Books query format:
-    // title -> intitle:xxx
-    // author -> inauthor:xxx
+  const placeholder =
+    mode === "title"
+      ? "Search by title..."
+      : mode === "author"
+      ? "Search by author..."
+      : "Search users by name...";
+
+  const searchBooks = async (m: "title" | "author", q: string) => {
     const operator = m === "title" ? "intitle:" : "inauthor:";
-    return `${operator}${clean}`;
+    const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(
+      operator + q
+    )}&maxResults=12`;
+
+    const res = await fetch(url);
+    if (!res.ok) throw new Error("Google Books failed");
+
+    const data = await res.json();
+    const items = Array.isArray(data?.items) ? data.items : [];
+
+    return items.map((it: any) => {
+      const id = String(it.id);
+      const title = it?.volumeInfo?.title ?? "Untitled";
+      const authorsArr: string[] = it?.volumeInfo?.authors ?? [];
+      const authors = authorsArr.length ? authorsArr.join(", ") : "Unknown author";
+
+      const thumb =
+        it?.volumeInfo?.imageLinks?.thumbnail ??
+        it?.volumeInfo?.imageLinks?.smallThumbnail ??
+        null;
+
+      const safeThumb = typeof thumb === "string" ? thumb.replace("http://", "https://") : null;
+
+      return { id, title, authors, thumbnail: safeThumb };
+    });
+  };
+
+  const searchUsers = async (q: string) => {
+    const url = `${API_BASE_URL}/search_users.php?q=${encodeURIComponent(q)}`;
+
+    const res = await fetch(url);
+    if (!res.ok) throw new Error("Users API failed");
+
+    const data = await res.json();
+    const items = Array.isArray(data) ? data : [];
+
+    return items.map((u: any) => ({
+      id: String(u.userId),
+      name: u.name ?? "Unknown",
+      email: u.email ?? "",
+      type: u.type ?? "normal",
+    }));
   };
 
   const onSearch = async () => {
-    const trimmed = query.trim();
-    if (!trimmed) return;
+    const q = query.trim();
+    if (!q) return;
 
     Keyboard.dismiss();
     setLoading(true);
     setErrorMsg(null);
 
+    // clear old results
+    setBookResults([]);
+    setUserResults([]);
+
     try {
-      const q = buildGoogleBooksQuery(mode, trimmed);
-      const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(
-        q
-      )}&maxResults=20`;
-
-      const res = await fetch(url);
-      if (!res.ok) throw new Error("Request failed");
-
-      const data = await res.json();
-
-      const items = Array.isArray(data?.items) ? data.items : [];
-      const mapped: BookResult[] = items.map((it: any) => {
-        const id = String(it.id ?? Math.random());
-        const title = it?.volumeInfo?.title ?? "Untitled";
-        const thumb =
-          it?.volumeInfo?.imageLinks?.thumbnail ??
-          it?.volumeInfo?.imageLinks?.smallThumbnail ??
-          null;
-
-        // Google thumbnails sometimes come as http, better convert to https:
-        const safeThumb = typeof thumb === "string" ? thumb.replace("http://", "https://") : null;
-
-        return { id, title, thumbnail: safeThumb };
-      });
-
-      setResults(mapped);
-      if (mapped.length === 0) setErrorMsg("No results found. Try another search.");
+      if (mode === "users") {
+        const users = await searchUsers(q);
+        setUserResults(users);
+        if (!users.length) setErrorMsg("No users found.");
+      } else {
+        const books = await searchBooks(mode, q);
+        setBookResults(books);
+        if (!books.length) setErrorMsg("No books found.");
+      }
     } catch (e) {
-      setErrorMsg("Could not load results. Check your internet and try again.");
-      setResults([]);
+      setErrorMsg("Something went wrong. Try again.");
     } finally {
       setLoading(false);
     }
+  };
+
+  const openBook = (b: BookResult) => {
+    router.push({ pathname: "/BookDetails", params: { id: b.id } });
+  };
+
+  const openUser = (u: UserResult) => {
+    router.push({ pathname: "/userDetails", params: { id: u.id } });
   };
 
   return (
@@ -99,11 +145,8 @@ export default function SearchTabScreen() {
         contentContainerStyle={styles.contentContainer}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.title}>Search</Text>
-          <Text style={styles.subtitle}>Find books by title or author.</Text>
-        </View>
+        <Text style={styles.title}>Search</Text>
+        <Text style={styles.subtitle}>Search books or users.</Text>
 
         {/* Search bar */}
         <View style={styles.searchBar}>
@@ -117,31 +160,13 @@ export default function SearchTabScreen() {
             returnKeyType="search"
             onSubmitEditing={onSearch}
           />
-          <Pressable
-            onPress={() => setQuery("")}
-            style={({ pressed }) => [{ opacity: pressed ? 0.6 : 1 }]}
-            hitSlop={10}
-          >
-            {query.length > 0 ? (
-              <FontAwesome name="times-circle" size={18} color="#9CA3AF" />
-            ) : (
-              <View style={{ width: 18 }} />
-            )}
-          </Pressable>
         </View>
 
-        {/* Mode toggle */}
+        {/* Mode buttons */}
         <View style={styles.toggleRow}>
-          <ToggleButton
-            label="Title"
-            active={mode === "title"}
-            onPress={() => setMode("title")}
-          />
-          <ToggleButton
-            label="Author"
-            active={mode === "author"}
-            onPress={() => setMode("author")}
-          />
+          <ModeBtn label="Title" active={mode === "title"} onPress={() => setMode("title")} />
+          <ModeBtn label="Author" active={mode === "author"} onPress={() => setMode("author")} />
+          <ModeBtn label="Users" active={mode === "users"} onPress={() => setMode("users")} />
         </View>
 
         {/* Search button */}
@@ -153,62 +178,66 @@ export default function SearchTabScreen() {
             { opacity: pressed || loading ? 0.85 : 1 },
           ]}
         >
-          <Text style={styles.searchButtonText}>
-            {loading ? "Searching..." : "Search"}
-          </Text>
+          <Text style={styles.searchButtonText}>{loading ? "Searching..." : "Search"}</Text>
         </Pressable>
 
-        {/* Results area (same page) */}
-        <View style={{ marginTop: 14 }}>
-          {loading && (
-            <View style={styles.loadingRow}>
-              <ActivityIndicator size="small" color={PRIMARY_COLOR} />
-              <Text style={styles.loadingText}>Loading results...</Text>
-            </View>
-          )}
+        {/* Loading / error */}
+        {loading && (
+          <View style={styles.loadingRow}>
+            <ActivityIndicator size="small" color={PRIMARY_COLOR} />
+            <Text style={styles.loadingText}>Loading...</Text>
+          </View>
+        )}
 
-          {errorMsg && !loading && (
-            <View style={styles.infoCard}>
-              <Text style={styles.infoText}>{errorMsg}</Text>
-            </View>
-          )}
+        {errorMsg && !loading && (
+          <View style={styles.infoCard}>
+            <Text style={styles.infoText}>{errorMsg}</Text>
+          </View>
+        )}
 
-          {!loading && results.length > 0 && (
-            <View style={styles.resultsCard}>
-              <Text style={styles.resultsTitle}>Results</Text>
-
-              <View style={styles.grid}>
-                {results.map((b) => (
-                  <View key={b.id} style={styles.bookItem}>
-                    <View style={styles.coverShadow}>
-                      {b.thumbnail ? (
-                        <Image
-                          source={{ uri: b.thumbnail }}
-                          style={styles.cover}
-                          resizeMode="cover"
-                        />
-                      ) : (
-                        <View style={styles.coverPlaceholder}>
-                          <FontAwesome name="book" size={18} color="#9CA3AF" />
-                          <Text style={styles.noCoverText}>No cover</Text>
-                        </View>
-                      )}
+        {/* BOOK RESULTS */}
+        {!loading && bookResults.length > 0 && (
+          <View style={styles.resultsCard}>
+            <Text style={styles.resultsTitle}>Books</Text>
+            <View style={styles.grid}>
+              {bookResults.map((b) => (
+                <Pressable key={b.id} onPress={() => openBook(b)} style={styles.bookItem}>
+                  {b.thumbnail ? (
+                    <Image source={{ uri: b.thumbnail }} style={styles.cover} />
+                  ) : (
+                    <View style={styles.coverPlaceholder}>
+                      <FontAwesome name="book" size={18} color="#9CA3AF" />
+                      <Text style={styles.noCoverText}>No cover</Text>
                     </View>
-                    <Text style={styles.bookTitle} numberOfLines={2}>
-                      {b.title}
-                    </Text>
-                  </View>
-                ))}
-              </View>
+                  )}
+                  <Text style={styles.bookTitle} numberOfLines={2}>{b.title}</Text>
+                </Pressable>
+              ))}
             </View>
-          )}
-        </View>
+          </View>
+        )}
+
+        {/* USER RESULTS */}
+        {!loading && userResults.length > 0 && (
+          <View style={styles.resultsCard}>
+            <Text style={styles.resultsTitle}>Users</Text>
+            {userResults.map((u) => (
+              <Pressable key={u.id} onPress={() => openUser(u)} style={styles.userRow}>
+                <FontAwesome name="user" size={16} color={PRIMARY_COLOR} />
+                <View style={{ marginLeft: 10, flex: 1 }}>
+                  <Text style={styles.userName}>{u.name}</Text>
+                  <Text style={styles.userMeta}>{u.type} • {u.email}</Text>
+                </View>
+              </Pressable>
+            ))}
+          </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-function ToggleButton({
+function ModeBtn({
   label,
   active,
   onPress,
@@ -220,184 +249,99 @@ function ToggleButton({
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => [
-        styles.toggleButton,
-        active && styles.toggleButtonActive,
-        { opacity: pressed ? 0.85 : 1 },
-      ]}
+      style={[styles.modeBtn, active && styles.modeBtnActive]}
     >
-      <Text style={[styles.toggleText, active && styles.toggleTextActive]}>
-        {label}
-      </Text>
+      <Text style={[styles.modeText, active && styles.modeTextActive]}>{label}</Text>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: BACKGROUND_COLOR,
-  },
-  container: {
-    flex: 1,
-    backgroundColor: BACKGROUND_COLOR,
-  },
-  contentContainer: {
-    padding: 20,
-    paddingBottom: 40,
-  },
+  safeArea: { flex: 1, backgroundColor: BACKGROUND_COLOR },
+  container: { flex: 1, backgroundColor: BACKGROUND_COLOR },
+  contentContainer: { padding: 20, paddingBottom: 40 },
 
-  header: {
-    marginBottom: 14,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: "700",
-    color: TEXT_COLOR,
-  },
-  subtitle: {
-    fontSize: 13,
-    color: "#6B7280",
-    marginTop: 2,
-  },
+  title: { fontSize: 24, fontWeight: "700", color: TEXT_COLOR },
+  subtitle: { fontSize: 13, color: "#6B7280", marginTop: 2, marginBottom: 12 },
 
   searchBar: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#fff",
     borderRadius: 14,
     paddingHorizontal: 12,
     paddingVertical: 10,
     borderWidth: 1,
     borderColor: "#E5E7EB",
   },
-  input: {
-    flex: 1,
-    marginLeft: 10,
-    marginRight: 10,
-    fontSize: 14,
-    color: TEXT_COLOR,
-  },
+  input: { flex: 1, marginLeft: 10, fontSize: 14, color: TEXT_COLOR },
 
-  toggleRow: {
-    flexDirection: "row",
-    marginTop: 12,
-    gap: 10,
-  },
-  toggleButton: {
+  toggleRow: { flexDirection: "row", gap: 8, marginTop: 12 },
+  modeBtn: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#fff",
     borderRadius: 999,
     paddingVertical: 10,
     alignItems: "center",
     borderWidth: 1,
     borderColor: "#E5E7EB",
   },
-  toggleButtonActive: {
-    backgroundColor: PRIMARY_COLOR,
-    borderColor: PRIMARY_COLOR,
-  },
-  toggleText: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: "#374151",
-  },
-  toggleTextActive: {
-    color: "#FFFFFF",
-  },
+  modeBtnActive: { backgroundColor: PRIMARY_COLOR, borderColor: PRIMARY_COLOR },
+  modeText: { fontSize: 13, fontWeight: "700", color: "#374151" },
+  modeTextActive: { color: "#fff" },
 
   searchButton: {
-    marginTop: 14,
+    marginTop: 12,
     backgroundColor: PRIMARY_COLOR,
     borderRadius: 12,
     paddingVertical: 12,
     alignItems: "center",
   },
-  searchButtonText: {
-    color: "#FFFFFF",
-    fontSize: 14,
-    fontWeight: "700",
-  },
+  searchButtonText: { color: "#fff", fontSize: 14, fontWeight: "700" },
 
-  loadingRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    paddingVertical: 8,
-  },
-  loadingText: {
-    fontSize: 13,
-    color: "#6B7280",
-  },
+  loadingRow: { flexDirection: "row", alignItems: "center", gap: 10, marginTop: 14 },
+  loadingText: { fontSize: 13, color: "#6B7280" },
 
   infoCard: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#fff",
     borderRadius: 16,
     padding: 14,
     borderWidth: 1,
     borderColor: "#E5E7EB",
+    marginTop: 14,
   },
-  infoText: {
-    fontSize: 13,
-    color: "#6B7280",
-  },
+  infoText: { fontSize: 13, color: "#6B7280" },
 
   resultsCard: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#fff",
     borderRadius: 16,
     padding: 14,
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
+    marginTop: 14,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
   },
-  resultsTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: TEXT_COLOR,
-    marginBottom: 10,
-  },
+  resultsTitle: { fontSize: 16, fontWeight: "800", color: TEXT_COLOR, marginBottom: 10 },
 
-  grid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-  },
-  bookItem: {
-    width: "31%", // 3 per row
-    marginBottom: 14,
-  },
-
-  coverShadow: {
-    borderRadius: 12,
-    overflow: "hidden",
-    backgroundColor: "#F3F4F6",
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 3,
-  },
-  cover: {
-    width: "100%",
-    height: 120,
-  },
+  grid: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between" },
+  bookItem: { width: "31%", marginBottom: 14 },
+  cover: { width: "100%", height: 120, borderRadius: 12, backgroundColor: "#F3F4F6" },
   coverPlaceholder: {
     height: 120,
+    borderRadius: 12,
+    backgroundColor: "#F3F4F6",
     alignItems: "center",
     justifyContent: "center",
-    gap: 6,
   },
-  noCoverText: {
-    fontSize: 11,
-    color: "#9CA3AF",
-  },
+  noCoverText: { fontSize: 11, color: "#9CA3AF", marginTop: 4 },
+  bookTitle: { marginTop: 6, fontSize: 12, color: TEXT_COLOR, fontWeight: "700" },
 
-  bookTitle: {
-    marginTop: 6,
-    fontSize: 12,
-    color: TEXT_COLOR,
-    fontWeight: "600",
+  userRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 10,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: "#E5E7EB",
   },
+  userName: { fontSize: 14, fontWeight: "700", color: TEXT_COLOR },
+  userMeta: { fontSize: 12, color: "#6B7280", marginTop: 2 },
 });
