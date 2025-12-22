@@ -48,13 +48,6 @@ type Notification = {
   isRead: boolean
   timestamp: string
 }
-  notifId: number
-  userId: number
-  message: string
-  type: string
-  isRead: boolean
-  timestamp: string
-}
 
 type DashboardStats = {
   totalBooksFinished: number
