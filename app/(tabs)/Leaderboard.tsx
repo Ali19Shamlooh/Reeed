@@ -1,24 +1,19 @@
 // app/leaderboard.tsx
-import FontAwesome from "@expo/vector-icons/FontAwesome";
-import { router } from "expo-router";
-import React from "react";
-import {
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import FontAwesome from "@expo/vector-icons/FontAwesome"
+import { router } from "expo-router"
+import React from "react"
+import { Pressable, StyleSheet, Text, View } from "react-native"
+import { SafeAreaView } from "react-native-safe-area-context"
 
 type LeaderboardUser = {
-  id: number;
-  name: string;
-  pages: number;
-};
+  id: number
+  name: string
+  pages: number
+}
 
-const PRIMARY_COLOR = "#0a7ea4";
-const BACKGROUND_COLOR = "#F9FAFB";
-const TEXT_COLOR = "#1F2937";
+const PRIMARY_COLOR = "#0a7ea4"
+const BACKGROUND_COLOR = "#F9FAFB"
+const TEXT_COLOR = "#1F2937"
 
 // Dummy leaderboard data
 const USERS: LeaderboardUser[] = [
@@ -31,82 +26,82 @@ const USERS: LeaderboardUser[] = [
   { id: 7, name: "Mark Holmes", pages: 4987 },
   { id: 8, name: "Georgie Clayton", pages: 4432 },
   { id: 9, name: "Alta Koch", pages: 3878 },
-];
+]
 
 export default function LeaderboardScreen() {
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.contentContainer}
-    >
-      {/* Back Button */}
-      <Pressable
-        onPress={() => router.back()}
-        style={({ pressed }) => [
-          styles.backButton,
-          { opacity: pressed ? 0.6 : 1 },
-        ]}
-      >
-        <FontAwesome name="chevron-left" size={20} color={TEXT_COLOR} />
-        <Text style={styles.backText}>Back</Text>
-      </Pressable>
+    <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
+      <View style={styles.content}>
+        {/* Back Button */}
+        <Pressable
+          onPress={() => router.back()}
+          style={({ pressed }) => [
+            styles.backButton,
+            { opacity: pressed ? 0.6 : 1 },
+          ]}
+        >
+          <FontAwesome name="chevron-left" size={20} color={TEXT_COLOR} />
+          <Text style={styles.backText}>Back</Text>
+        </Pressable>
 
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.title}>Leaderboard</Text>
-        <Text style={styles.subtitle}>
-          See who has read the most pages in Reeed.
-        </Text>
-      </View>
-
-      {/* 🔥 All Readers Only — Top 3 Removed */}
-      <View style={styles.card}>
-        <View style={styles.cardHeaderRow}>
-          <Text style={styles.cardTitle}>All readers</Text>
-          <FontAwesome name="list-ol" size={18} color={PRIMARY_COLOR} />
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={styles.title}>Leaderboard</Text>
+          <Text style={styles.subtitle}>
+            See who has read the most pages in Reeed.
+          </Text>
         </View>
 
-        {USERS.map((user, index) => (
-          <View key={user.id} style={styles.row}>
-            <Text
-              style={[
-                styles.rowRank,
-                index === 0 && styles.rowRankHighlight,
-              ]}
-            >
-              #{index + 1}
-            </Text>
-
-            <View style={styles.rowAvatar}>
-              <Text style={styles.rowAvatarInitials}>
-                {user.name.charAt(0)}
-              </Text>
-            </View>
-
-            <View style={{ flex: 1 }}>
-              <Text style={styles.rowName} numberOfLines={1}>
-                {user.name}
-              </Text>
-            </View>
-
-            <View style={styles.rowScoreBadge}>
-              <FontAwesome
-                name="book"
-                size={11}
-                color="#FFF"
-                style={{ marginRight: 4 }}
-              />
-              <Text style={styles.rowScoreText}>{user.pages}</Text>
-            </View>
+        {/* 🔥 All Readers Only — Top 3 Removed */}
+        <View style={styles.card}>
+          <View style={styles.cardHeaderRow}>
+            <Text style={styles.cardTitle}>All readers</Text>
+            <FontAwesome name="list-ol" size={18} color={PRIMARY_COLOR} />
           </View>
-        ))}
+
+          {USERS.map((user, index) => (
+            <View key={user.id} style={styles.row}>
+              <Text
+                style={[styles.rowRank, index === 0 && styles.rowRankHighlight]}
+              >
+                #{index + 1}
+              </Text>
+
+              <View style={styles.rowAvatar}>
+                <Text style={styles.rowAvatarInitials}>
+                  {user.name.charAt(0)}
+                </Text>
+              </View>
+
+              <View style={{ flex: 1 }}>
+                <Text style={styles.rowName} numberOfLines={1}>
+                  {user.name}
+                </Text>
+              </View>
+
+              <View style={styles.rowScoreBadge}>
+                <FontAwesome
+                  name="book"
+                  size={11}
+                  color="#FFF"
+                  style={{ marginRight: 4 }}
+                />
+                <Text style={styles.rowScoreText}>{user.pages}</Text>
+              </View>
+            </View>
+          ))}
+        </View>
       </View>
-    </ScrollView>
-  );
+    </SafeAreaView>
+  )
 }
 
 // --- styles ---
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: BACKGROUND_COLOR,
+  },
   container: {
     flex: 1,
     backgroundColor: BACKGROUND_COLOR,
@@ -208,4 +203,8 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "600",
   },
-});
+  content: {
+    paddingHorizontal: 20,
+    paddingTop: 10,
+  },
+})
