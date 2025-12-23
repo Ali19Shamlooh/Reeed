@@ -1,15 +1,9 @@
 import { Ionicons } from "@expo/vector-icons"
 import { Link, Stack } from "expo-router"
 import React from "react"
-import {
-  FlatList,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native"
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
-
+import BookBox from "../components/BookBox"
 
 // Mock data for demonstration
 const mockBooks = [
@@ -28,37 +22,19 @@ const mockBooks = [
   { id: "3", title: "1984", author: "George Orwell", progress: 1.0 },
 ]
 
-const BookItem = ({ item }: { item: (typeof mockBooks)[0] }) => {
-  const isComplete = item.progress === 1.0
-  const progressText = isComplete
-    ? "Completed"
-    : `${Math.round(item.progress * 100)}% Read`
-
-  return (
-    <Link href={`/reader/${item.id}`} asChild>
-      <TouchableOpacity style={styles.bookCard}>
-        <View style={styles.textContainer}>
-          <Text style={styles.bookTitle}>{item.title}</Text>
-          <Text style={styles.bookAuthor}>{item.author}</Text>
-        </View>
-        <View style={styles.progressContainer}>
-          <Text style={isComplete ? styles.completeText : styles.progressText}>
-            {progressText}
-          </Text>
-          <Ionicons
-            name={
-              isComplete ? "checkmark-circle" : "arrow-forward-circle-outline"
-            }
-            size={28}
-            color={isComplete ? "#10b981" : "#0a7ea4"}
-          />
-        </View>
-      </TouchableOpacity>
-    </Link>
-  )
-}
-
 export default function LibraryScreen() {
+  // Convert library books to BookBox format
+  const bookBoxData = mockBooks.map((b) => ({
+    id: b.id,
+    title: b.title,
+    authors: b.author,
+    thumbnail: null, // add cover later if you have it
+  }))
+
+  const openBook = (book: { id: string }) => {
+    router.push(`/reader/${book.id}`)
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       <Stack.Screen
@@ -76,26 +52,23 @@ export default function LibraryScreen() {
         }}
       />
 
-      <Text style={styles.header}>Your Books ({mockBooks.length})</Text>
+      <Text style={styles.header}>Your Books ({bookBoxData.length})</Text>
 
-      <FlatList
-        data={mockBooks}
-        renderItem={BookItem}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContent}
-        ListEmptyComponent={() => (
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>
-              Your library is empty. Upload a book to get started!
-            </Text>
-            <Link href="/(tabs)/upload-book" asChild>
-              <TouchableOpacity style={styles.uploadButton}>
-                <Text style={styles.uploadButtonText}>Upload Book</Text>
-              </TouchableOpacity>
-            </Link>
-          </View>
-        )}
-      />
+      {bookBoxData.length > 0 ? (
+        <BookBox books={bookBoxData} onPressBook={openBook} />
+      ) : (
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyText}>
+            Your library is empty. Upload a book to get started!
+          </Text>
+
+          <Link href="/(tabs)/upload-book" asChild>
+            <TouchableOpacity style={styles.uploadButton}>
+              <Text style={styles.uploadButtonText}>Upload Book</Text>
+            </TouchableOpacity>
+          </Link>
+        </View>
+      )}
     </SafeAreaView>
   )
 }
