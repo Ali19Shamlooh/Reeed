@@ -1,21 +1,21 @@
-import React from "react";
-import { View, Text, Image, Pressable, StyleSheet } from "react-native";
-import FontAwesome from "@expo/vector-icons/FontAwesome";
+import FontAwesome from "@expo/vector-icons/FontAwesome"
+import React from "react"
+import { Image, Pressable, StyleSheet, Text, View } from "react-native"
 
 type BookResult = {
-  id: string;
-  title: string;
-  authors: string;
-  thumbnail?: string | null;
-};
+  id: string
+  title: string
+  authors: string
+  thumbnail?: string | null
+}
 
 type Props = {
-  books: BookResult[];
-  onPressBook: (book: BookResult) => void;
-};
+  books: BookResult[]
+  onPressBook: (book: BookResult) => void
+}
 
 export default function BookBox({ books, onPressBook }: Props) {
-  if (!books.length) return null;
+  if (!books.length) return null
 
   return (
     <View style={styles.resultsCard}>
@@ -44,7 +44,7 @@ export default function BookBox({ books, onPressBook }: Props) {
         ))}
       </View>
     </View>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
@@ -95,4 +95,4 @@ const styles = StyleSheet.create({
     color: "#1F2937",
     fontWeight: "700",
   },
-});
+})
