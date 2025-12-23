@@ -1,14 +1,8 @@
 import { router } from "expo-router"
 import { onAuthStateChanged, signOut, User } from "firebase/auth"
 import React, { useEffect, useState } from "react"
-import {
-  ActivityIndicator,
-  Button,
-  SafeAreaView,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native"
+import { ActivityIndicator, Button, StyleSheet, Text, View } from "react-native"
+import { SafeAreaView } from "react-native-safe-area-context"
 import { auth } from "../firebaseConfig"
 // FIX: Updated imports to match lowercase filenames shown in your screenshot
 import ForgotPasswordComponent from "./auth/forgot-password"
@@ -33,11 +27,8 @@ export default function Home() {
       if (currentUser) {
         // User is signed in: Redirect to the dashboard (tabs)
         // We use replace to prevent back-navigation to the login screen
-        try {
-          router.replace("./(tabs)")
-        } catch (error) {
-          console.log(error)
-        }
+
+        router.replace("./(tabs)/Home")
       }
       // If currentUser is null, we stay here and render the Login UI.
     })
@@ -105,13 +96,7 @@ export default function Home() {
   // If we reach here, user is confirmed to be null (Logged Out).
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.headerContainer}>
-        <Text style={styles.appTitle}>=</Text>
-      </View>
-
-      <View style={styles.contentContainer}>
-        {renderContent()} {/* Renders the currently active component */}
-      </View>
+      <View style={styles.contentContainer}>{renderContent()}</View>
     </SafeAreaView>
   )
 }

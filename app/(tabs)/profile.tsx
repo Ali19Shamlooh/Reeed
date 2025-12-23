@@ -6,12 +6,13 @@ import {
   ActivityIndicator,
   Alert,
   Button,
-  SafeAreaView,
   StyleSheet,
   Text,
   View,
 } from "react-native"
 import { auth, db } from "../../firebaseConfig"
+import { SafeAreaView } from "react-native-safe-area-context"
+
 
 // Define the structure for user data
 interface UserProfile {
@@ -20,7 +21,7 @@ interface UserProfile {
   readingGoal: number
   currentStreak: number
   totalBooksRead: number
-  type?: "normal" | "admin" 
+  type?: "normal" | "admin"
 }
 
 export default function ProfileScreen() {

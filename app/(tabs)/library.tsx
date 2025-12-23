@@ -3,12 +3,13 @@ import { Link, Stack } from "expo-router"
 import React from "react"
 import {
   FlatList,
-  SafeAreaView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native"
+import { SafeAreaView } from "react-native-safe-area-context"
+
 
 // Mock data for demonstration
 const mockBooks = [
