@@ -5,7 +5,7 @@ import React, { useEffect, useState } from "react"
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 
-const userId = 2
+const userId = 1
 
 // Colors
 const PRIMARY_COLOR = "#0a7ea4"

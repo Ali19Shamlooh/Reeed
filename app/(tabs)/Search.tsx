@@ -1,142 +1,145 @@
 // app/(tabs)/search.tsx  (or whatever your file name is)
-import FontAwesome from "@expo/vector-icons/FontAwesome";
-import { router } from "expo-router";
-import React, { useState } from "react";
+import FontAwesome from "@expo/vector-icons/FontAwesome"
+import { router } from "expo-router"
+import React, { useState } from "react"
 import {
-    ActivityIndicator,
-    Image,
-    Keyboard,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+  ActivityIndicator,
+  Keyboard,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native"
+import { SafeAreaView } from "react-native-safe-area-context"
+import BookBox from "../components/BookBox"
 
-const PRIMARY_COLOR = "#0a7ea4";
-const BACKGROUND_COLOR = "#F9FAFB";
-const TEXT_COLOR = "#1F2937";
+const PRIMARY_COLOR = "#0a7ea4"
+const BACKGROUND_COLOR = "#F9FAFB"
+const TEXT_COLOR = "#1F2937"
 
 // ✅ change this
-const API_BASE_URL = "https://YOUR-DOMAIN.com/api";
+const API_BASE_URL = "http://localhost/reeed/"
 
-type Mode = "title" | "author" | "users";
+type Mode = "title" | "author" | "users"
 
 type BookResult = {
-  id: string;
-  title: string;
-  authors: string;
-  thumbnail?: string | null;
-};
+  id: string
+  title: string
+  authors: string
+  thumbnail?: string | null
+}
 
 type UserResult = {
-  id: string; // userId from MySQL
-  name: string;
-  email: string;
-  type: string; // admin/normal
-};
+  id: string // userId from MySQL
+  name: string
+  email: string
+  type: string // admin/normal
+}
 
 export default function SearchTabScreen() {
-  const [mode, setMode] = useState<Mode>("title");
-  const [query, setQuery] = useState("");
+  const [mode, setMode] = useState<Mode>("title")
+  const [query, setQuery] = useState("")
 
-  const [loading, setLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false)
+  const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
-  const [bookResults, setBookResults] = useState<BookResult[]>([]);
-  const [userResults, setUserResults] = useState<UserResult[]>([]);
+  const [bookResults, setBookResults] = useState<BookResult[]>([])
+  const [userResults, setUserResults] = useState<UserResult[]>([])
 
   const placeholder =
     mode === "title"
       ? "Search by title..."
       : mode === "author"
       ? "Search by author..."
-      : "Search users by name...";
+      : "Search users by name..."
 
   const searchBooks = async (m: "title" | "author", q: string) => {
-    const operator = m === "title" ? "intitle:" : "inauthor:";
+    const operator = m === "title" ? "intitle:" : "inauthor:"
     const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(
       operator + q
-    )}&maxResults=12`;
+    )}&maxResults=12`
 
-    const res = await fetch(url);
-    if (!res.ok) throw new Error("Google Books failed");
+    const res = await fetch(url)
+    if (!res.ok) throw new Error("Google Books failed")
 
-    const data = await res.json();
-    const items = Array.isArray(data?.items) ? data.items : [];
+    const data = await res.json()
+    const items = Array.isArray(data?.items) ? data.items : []
 
     return items.map((it: any) => {
-      const id = String(it.id);
-      const title = it?.volumeInfo?.title ?? "Untitled";
-      const authorsArr: string[] = it?.volumeInfo?.authors ?? [];
-      const authors = authorsArr.length ? authorsArr.join(", ") : "Unknown author";
+      const id = String(it.id)
+      const title = it?.volumeInfo?.title ?? "Untitled"
+      const authorsArr: string[] = it?.volumeInfo?.authors ?? []
+      const authors = authorsArr.length
+        ? authorsArr.join(", ")
+        : "Unknown author"
 
       const thumb =
         it?.volumeInfo?.imageLinks?.thumbnail ??
         it?.volumeInfo?.imageLinks?.smallThumbnail ??
-        null;
+        null
 
-      const safeThumb = typeof thumb === "string" ? thumb.replace("http://", "https://") : null;
+      const safeThumb =
+        typeof thumb === "string" ? thumb.replace("http://", "https://") : null
 
-      return { id, title, authors, thumbnail: safeThumb };
-    });
-  };
+      return { id, title, authors, thumbnail: safeThumb }
+    })
+  }
 
   const searchUsers = async (q: string) => {
-    const url = `${API_BASE_URL}/search_users.php?q=${encodeURIComponent(q)}`;
+    const url = `${API_BASE_URL}/search_users.php?q=${encodeURIComponent(q)}`
 
-    const res = await fetch(url);
-    if (!res.ok) throw new Error("Users API failed");
+    const res = await fetch(url)
+    if (!res.ok) throw new Error("Users API failed")
 
-    const data = await res.json();
-    const items = Array.isArray(data) ? data : [];
+    const data = await res.json()
+    const items = Array.isArray(data) ? data : []
 
     return items.map((u: any) => ({
       id: String(u.userId),
       name: u.name ?? "Unknown",
       email: u.email ?? "",
       type: u.type ?? "normal",
-    }));
-  };
+    }))
+  }
 
   const onSearch = async () => {
-    const q = query.trim();
-    if (!q) return;
+    const q = query.trim()
+    if (!q) return
 
-    Keyboard.dismiss();
-    setLoading(true);
-    setErrorMsg(null);
+    Keyboard.dismiss()
+    setLoading(true)
+    setErrorMsg(null)
 
     // clear old results
-    setBookResults([]);
-    setUserResults([]);
+    setBookResults([])
+    setUserResults([])
 
     try {
       if (mode === "users") {
-        const users = await searchUsers(q);
-        setUserResults(users);
-        if (!users.length) setErrorMsg("No users found.");
+        const users = await searchUsers(q)
+        setUserResults(users)
+        if (!users.length) setErrorMsg("No users found.")
       } else {
-        const books = await searchBooks(mode, q);
-        setBookResults(books);
-        if (!books.length) setErrorMsg("No books found.");
+        const books = await searchBooks(mode, q)
+        setBookResults(books)
+        if (!books.length) setErrorMsg("No books found.")
       }
     } catch (e) {
-      setErrorMsg("Something went wrong. Try again.");
+      setErrorMsg("Something went wrong. Try again.")
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const openBook = (b: BookResult) => {
-    router.push({ pathname: "/BookDetails", params: { id: b.id } });
-  };
+    router.push({ pathname: "/BookDetails", params: { id: b.id } })
+  }
 
   const openUser = (u: UserResult) => {
-    router.push({ pathname: "/userdetails", params: { id: u.id } });
-  };
+    router.push({ pathname: "/userdetails", params: { id: u.id } })
+  }
 
   return (
     <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
@@ -164,9 +167,21 @@ export default function SearchTabScreen() {
 
         {/* Mode buttons */}
         <View style={styles.toggleRow}>
-          <ModeBtn label="Title" active={mode === "title"} onPress={() => setMode("title")} />
-          <ModeBtn label="Author" active={mode === "author"} onPress={() => setMode("author")} />
-          <ModeBtn label="Users" active={mode === "users"} onPress={() => setMode("users")} />
+          <ModeBtn
+            label="Title"
+            active={mode === "title"}
+            onPress={() => setMode("title")}
+          />
+          <ModeBtn
+            label="Author"
+            active={mode === "author"}
+            onPress={() => setMode("author")}
+          />
+          <ModeBtn
+            label="Users"
+            active={mode === "users"}
+            onPress={() => setMode("users")}
+          />
         </View>
 
         {/* Search button */}
@@ -178,7 +193,9 @@ export default function SearchTabScreen() {
             { opacity: pressed || loading ? 0.85 : 1 },
           ]}
         >
-          <Text style={styles.searchButtonText}>{loading ? "Searching..." : "Search"}</Text>
+          <Text style={styles.searchButtonText}>
+            {loading ? "Searching..." : "Search"}
+          </Text>
         </Pressable>
 
         {/* Loading / error */}
@@ -196,37 +213,24 @@ export default function SearchTabScreen() {
         )}
 
         {/* BOOK RESULTS */}
-        {!loading && bookResults.length > 0 && (
-          <View style={styles.resultsCard}>
-            <Text style={styles.resultsTitle}>Books</Text>
-            <View style={styles.grid}>
-              {bookResults.map((b) => (
-                <Pressable key={b.id} onPress={() => openBook(b)} style={styles.bookItem}>
-                  {b.thumbnail ? (
-                    <Image source={{ uri: b.thumbnail }} style={styles.cover} />
-                  ) : (
-                    <View style={styles.coverPlaceholder}>
-                      <FontAwesome name="book" size={18} color="#9CA3AF" />
-                      <Text style={styles.noCoverText}>No cover</Text>
-                    </View>
-                  )}
-                  <Text style={styles.bookTitle} numberOfLines={2}>{b.title}</Text>
-                </Pressable>
-              ))}
-            </View>
-          </View>
-        )}
+        {!loading && <BookBox books={bookResults} onPressBook={openBook} />}
 
         {/* USER RESULTS */}
         {!loading && userResults.length > 0 && (
           <View style={styles.resultsCard}>
             <Text style={styles.resultsTitle}>Users</Text>
             {userResults.map((u) => (
-              <Pressable key={u.id} onPress={() => openUser(u)} style={styles.userRow}>
+              <Pressable
+                key={u.id}
+                onPress={() => openUser(u)}
+                style={styles.userRow}
+              >
                 <FontAwesome name="user" size={16} color={PRIMARY_COLOR} />
                 <View style={{ marginLeft: 10, flex: 1 }}>
                   <Text style={styles.userName}>{u.name}</Text>
-                  <Text style={styles.userMeta}>{u.type} • {u.email}</Text>
+                  <Text style={styles.userMeta}>
+                    {u.type} • {u.email}
+                  </Text>
                 </View>
               </Pressable>
             ))}
@@ -234,7 +238,7 @@ export default function SearchTabScreen() {
         )}
       </ScrollView>
     </SafeAreaView>
-  );
+  )
 }
 
 function ModeBtn({
@@ -242,18 +246,20 @@ function ModeBtn({
   active,
   onPress,
 }: {
-  label: string;
-  active: boolean;
-  onPress: () => void;
+  label: string
+  active: boolean
+  onPress: () => void
 }) {
   return (
     <Pressable
       onPress={onPress}
       style={[styles.modeBtn, active && styles.modeBtnActive]}
     >
-      <Text style={[styles.modeText, active && styles.modeTextActive]}>{label}</Text>
+      <Text style={[styles.modeText, active && styles.modeTextActive]}>
+        {label}
+      </Text>
     </Pressable>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
@@ -299,7 +305,12 @@ const styles = StyleSheet.create({
   },
   searchButtonText: { color: "#fff", fontSize: 14, fontWeight: "700" },
 
-  loadingRow: { flexDirection: "row", alignItems: "center", gap: 10, marginTop: 14 },
+  loadingRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginTop: 14,
+  },
   loadingText: { fontSize: 13, color: "#6B7280" },
 
   infoCard: {
@@ -320,11 +331,25 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#E5E7EB",
   },
-  resultsTitle: { fontSize: 16, fontWeight: "800", color: TEXT_COLOR, marginBottom: 10 },
+  resultsTitle: {
+    fontSize: 16,
+    fontWeight: "800",
+    color: TEXT_COLOR,
+    marginBottom: 10,
+  },
 
-  grid: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between" },
+  grid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+  },
   bookItem: { width: "31%", marginBottom: 14 },
-  cover: { width: "100%", height: 120, borderRadius: 12, backgroundColor: "#F3F4F6" },
+  cover: {
+    width: "100%",
+    height: 120,
+    borderRadius: 12,
+    backgroundColor: "#F3F4F6",
+  },
   coverPlaceholder: {
     height: 120,
     borderRadius: 12,
@@ -333,7 +358,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   noCoverText: { fontSize: 11, color: "#9CA3AF", marginTop: 4 },
-  bookTitle: { marginTop: 6, fontSize: 12, color: TEXT_COLOR, fontWeight: "700" },
+  bookTitle: {
+    marginTop: 6,
+    fontSize: 12,
+    color: TEXT_COLOR,
+    fontWeight: "700",
+  },
 
   userRow: {
     flexDirection: "row",
@@ -344,4 +374,4 @@ const styles = StyleSheet.create({
   },
   userName: { fontSize: 14, fontWeight: "700", color: TEXT_COLOR },
   userMeta: { fontSize: 12, color: "#6B7280", marginTop: 2 },
-});
+})
