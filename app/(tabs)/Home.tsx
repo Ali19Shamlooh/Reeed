@@ -12,7 +12,7 @@ const PRIMARY_COLOR = "#0a7ea4"
 const BACKGROUND_COLOR = "#F9FAFB"
 const TEXT_COLOR = "#1F2937"
 
-// --- Types matching your ERD ---
+// --- Types matching ERD ---
 export type BookmarkItem = {
   id: number | string
   bookTitle: string
@@ -46,32 +46,6 @@ const dummyBookmarks: BookmarkItem[] = [
   },
 ]
 
-type User = {
-  userId: number
-  name: string
-  email: string
-  avatar?: string
-  type: "normal" | "admin" // 👈 changed to match the value you use
-}
-
-type Book = {
-  bookId: number
-  title: string
-  author: string
-  category: string
-  cover?: string
-  pageNumber: number
-}
-
-type ReadingLog = {
-  logId: number
-  userId: number
-  bookId: number
-  startTime: string
-  endTime: string
-  pagesRead: number
-}
-
 type Notification = {
   notifId: number
   userId: number
@@ -81,10 +55,6 @@ type Notification = {
   timestamp: string
 }
 
-type DashboardStats = {
-  totalBooksFinished: number
-  totalPagesRead: number
-}
 
 // --- Screen ---
 
