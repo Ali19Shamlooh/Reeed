@@ -1,14 +1,16 @@
+// app/BookDetails.tsx
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    Image,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
+  ActivityIndicator,
+  Alert,
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -25,7 +27,11 @@ type BookDetails = {
   categories: string;
   pageCount?: number;
   publishedDate?: string;
-  isbn13?: string | null; // ✅ ADD THIS HERE
+  isbn13?: string | null;
+
+  // ✅ Web reader links
+  previewLink?: string | null;
+  webReaderLink?: string | null;
 };
 
 export default function BookDetailsScreen() {
@@ -65,9 +71,17 @@ export default function BookDetailsScreen() {
         const identifiers = Array.isArray(info?.industryIdentifiers)
           ? info.industryIdentifiers
           : [];
-
         const isbn13Obj = identifiers.find((x: any) => x.type === "ISBN_13");
         const isbn13 = isbn13Obj?.identifier ?? null;
+
+        // ✅ Reader links
+        const previewLink =
+          typeof info?.previewLink === "string" ? info.previewLink : null;
+
+        const webReaderLink =
+          typeof data?.accessInfo?.webReaderLink === "string"
+            ? data.accessInfo.webReaderLink
+            : null;
 
         setBook({
           id: String(data?.id ?? id),
@@ -82,7 +96,9 @@ export default function BookDetailsScreen() {
             : "N/A",
           pageCount: info?.pageCount,
           publishedDate: info?.publishedDate,
-          isbn13, // ✅ put it like this
+          isbn13,
+          previewLink,
+          webReaderLink,
         });
       } catch (e) {
         setErrorMsg("Could not load book details. Please try again.");
@@ -94,6 +110,33 @@ export default function BookDetailsScreen() {
 
     load();
   }, [id]);
+
+  // ✅ Open in-app web reader page
+  const openReader = () => {
+    if (!book) return;
+
+    const url = book.webReaderLink || book.previewLink;
+
+    if (!url) {
+      Alert.alert(
+        "Not available",
+        "This book does not have a Google Books preview/web reader link."
+      );
+      return;
+    }
+
+    router.push({
+      pathname: "/BookWebReader",
+      params: { url, title: book.title },
+    });
+  };
+
+  // ✅ Your future library logic (dummy for now)
+  const addToLibrary = () => {
+    if (!book) return;
+    console.log("Add to library:", book.id);
+    Alert.alert("Added", "Book added to your library (demo).");
+  };
 
   return (
     <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
@@ -148,18 +191,13 @@ export default function BookDetailsScreen() {
             <Text style={styles.title}>{book.title}</Text>
             <Text style={styles.author}>by {book.authors}</Text>
 
-              {/* ✅ ISBN-13 */}
-            <Text style={styles.author}>
-              GoogleBookID: {book.id }
-            </Text>
-
-
-            {/* ✅ ISBN-13 */}
+            {/* IDs */}
+            <Text style={styles.author}>GoogleBookID: {book.id}</Text>
             <Text style={styles.author}>
               ISBN-13: {book.isbn13 ?? "Not available"}
             </Text>
 
-            {/* Small info row */}
+            {/* Info row */}
             <View style={styles.infoRow}>
               <InfoChip icon="tag" text={book.categories} />
               {book.pageCount ? (
@@ -176,14 +214,26 @@ export default function BookDetailsScreen() {
               <Text style={styles.desc}>{stripHtml(book.description)}</Text>
             </View>
 
+            {/* ✅ Read Now */}
             <Pressable
               style={({ pressed }) => [
                 styles.primaryButton,
                 { opacity: pressed ? 0.85 : 1 },
               ]}
-              onPress={() => console.log("Add to library:", book.id)}
+              onPress={openReader}
             >
-              <Text style={styles.primaryButtonText}>Add to My Library</Text>
+              <Text style={styles.primaryButtonText}>Read Now</Text>
+            </Pressable>
+
+            {/* ✅ Add to Library */}
+            <Pressable
+              style={({ pressed }) => [
+                styles.secondaryButton,
+                { opacity: pressed ? 0.85 : 1 },
+              ]}
+              onPress={addToLibrary}
+            >
+              <Text style={styles.secondaryButtonText}>Add to My Library</Text>
             </Pressable>
           </>
         )}
@@ -203,8 +253,9 @@ function InfoChip({ icon, text }: { icon: any; text: string }) {
   );
 }
 
+// Google Books sometimes returns HTML in description
 function stripHtml(html: string) {
-  return html.replace(/<\/?[^>]+(>|$)/g, "");
+  return String(html ?? "").replace(/<\/?[^>]+(>|$)/g, "");
 }
 
 const styles = StyleSheet.create({
@@ -242,13 +293,30 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
   cover: { width: "100%", height: "100%" },
-  coverPlaceholder: { flex: 1, justifyContent: "center", alignItems: "center", gap: 6 },
+  coverPlaceholder: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 6,
+  },
   noCoverText: { fontSize: 12, color: "#9CA3AF" },
 
-  title: { fontSize: 22, fontWeight: "800", color: TEXT_COLOR, marginTop: 14, textAlign: "center" },
+  title: {
+    fontSize: 22,
+    fontWeight: "800",
+    color: TEXT_COLOR,
+    marginTop: 14,
+    textAlign: "center",
+  },
   author: { fontSize: 13, color: "#6B7280", marginTop: 4, textAlign: "center" },
 
-  infoRow: { flexDirection: "row", flexWrap: "wrap", justifyContent: "center", gap: 8, marginTop: 10 },
+  infoRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "center",
+    gap: 8,
+    marginTop: 10,
+  },
   chip: {
     flexDirection: "row",
     alignItems: "center",
@@ -283,4 +351,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   primaryButtonText: { color: "#FFFFFF", fontSize: 14, fontWeight: "700" },
+
+  secondaryButton: {
+    marginTop: 10,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+  },
+  secondaryButtonText: { color: PRIMARY_COLOR, fontSize: 14, fontWeight: "700" },
 });
