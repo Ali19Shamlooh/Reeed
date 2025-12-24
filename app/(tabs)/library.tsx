@@ -1,9 +1,11 @@
 import { Ionicons } from "@expo/vector-icons"
 import { Link, router, Stack } from "expo-router"
-import React from "react"
+import React, { useEffect, useState } from "react"
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import BookBox from "../components/BookBox"
+
+const userId = 1
 
 // Mock data for demonstration
 const mockBooks = [
@@ -23,6 +25,17 @@ const mockBooks = [
 ]
 
 export default function LibraryScreen() {
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
+  const [dbBookIds, setDbBookIds] = useState([])
+
+  useEffect(() => {
+    const getUserBookIds = () => {
+      const url = `http://localhost/reeed/getUserBooksFromdb.php?userId=${userId}`
+      
+    }
+  }, [])
+
   // Convert library books to BookBox format
   const bookBoxData = mockBooks.map((b) => ({
     id: b.id,
