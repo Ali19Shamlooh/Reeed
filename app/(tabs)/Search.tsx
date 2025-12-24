@@ -59,7 +59,7 @@ export default function SearchTabScreen() {
     const operator = m === "title" ? "intitle:" : "inauthor:"
     const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(
       operator + q
-    )}&maxResults=12`
+    )}&maxResults=20`
 
     const res = await fetch(url)
     if (!res.ok) throw new Error("Google Books failed")

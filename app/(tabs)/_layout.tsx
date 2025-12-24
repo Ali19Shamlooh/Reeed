@@ -19,7 +19,7 @@ export default function TabLayout() {
         },
       }}
     >
-      {/* Dashboard */}
+      {/* 🏠 Home / Dashboard */}
       <Tabs.Screen
         name="Home"
         options={{
@@ -30,7 +30,18 @@ export default function TabLayout() {
         }}
       />
 
-      {/* Library */}
+      {/* 🔍 Search */}
+      <Tabs.Screen
+        name="Search"
+        options={{
+          title: "Search",
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="search-outline" size={TAB_ICON_SIZE} color={color} />
+          ),
+        }}
+      />
+
+      {/* 📚 Library */}
       <Tabs.Screen
         name="library"
         options={{
@@ -40,23 +51,23 @@ export default function TabLayout() {
           ),
         }}
       />
+
+      {/* 🏆 Leaderboard */}
+      <Tabs.Screen
+        name="Leaderboard"
+        options={{
+          title: "Leaderboard",
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="trophy-outline" size={TAB_ICON_SIZE} color={color} />
+          ),
+        }}
+      />
+
+      {/* 👤 Profile */}
       <Tabs.Screen
         name="profile"
         options={{
           title: "Profile",
-          tabBarIcon: ({ color }) => (
-            <Ionicons
-              name="person-circle-outline"
-              size={TAB_ICON_SIZE}
-              color={color}
-            />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="LeaderBoard"
-        options={{
-          title: "LeaderBoard",
           tabBarIcon: ({ color }) => (
             <Ionicons
               name="person-circle-outline"
