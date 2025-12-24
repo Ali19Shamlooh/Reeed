@@ -4,7 +4,6 @@ import { router } from "expo-router"
 import React, { useState } from "react"
 import {
   ActivityIndicator,
-  Image,
   Keyboard,
   Pressable,
   ScrollView,
@@ -14,13 +13,14 @@ import {
   View,
 } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
+import BookBox from "../components/BookBox"
 
 const PRIMARY_COLOR = "#0a7ea4"
 const BACKGROUND_COLOR = "#F9FAFB"
 const TEXT_COLOR = "#1F2937"
 
 // ✅ change this
-const API_BASE_URL = "https://YOUR-DOMAIN.com/api"
+const API_BASE_URL = "http://localhost/reeed/"
 
 type Mode = "title" | "author" | "users"
 
@@ -213,32 +213,7 @@ export default function SearchTabScreen() {
         )}
 
         {/* BOOK RESULTS */}
-        {!loading && bookResults.length > 0 && (
-          <View style={styles.resultsCard}>
-            <Text style={styles.resultsTitle}>Books</Text>
-            <View style={styles.grid}>
-              {bookResults.map((b) => (
-                <Pressable
-                  key={b.id}
-                  onPress={() => openBook(b)}
-                  style={styles.bookItem}
-                >
-                  {b.thumbnail ? (
-                    <Image source={{ uri: b.thumbnail }} style={styles.cover} />
-                  ) : (
-                    <View style={styles.coverPlaceholder}>
-                      <FontAwesome name="book" size={18} color="#9CA3AF" />
-                      <Text style={styles.noCoverText}>No cover</Text>
-                    </View>
-                  )}
-                  <Text style={styles.bookTitle} numberOfLines={2}>
-                    {b.title}
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
-          </View>
-        )}
+        {!loading && <BookBox books={bookResults} onPressBook={openBook} />}
 
         {/* USER RESULTS */}
         {!loading && userResults.length > 0 && (
