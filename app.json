@@ -3,7 +3,7 @@
     "name": "Reeed",
     "slug": "Reeed",
     "extra": {
-      "GOOGLE_BOOKS_API_KEY": "AIzaSyA9Ph8W0hAARnlXXzylJ08PZJM-iKgPjw0",
+      "GOOGLE_BOOKS_API_KEY": "AIzaSyBNnrjTNspcfV6p2j3WMQiIbdGVp8zEYw0",
       "GOOGLE_BOOKS_API_BASE_URL": "https://www.googleapis.com/books/v1/volumes/",
       "API_BASE_URL": "localhost/reeed/"
     },
