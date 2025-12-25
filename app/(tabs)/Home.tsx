@@ -18,7 +18,7 @@ const userId = 2;
 // - On REAL PHONE, localhost = the PHONE, not your PC.
 // - Use your PC IP instead, e.g. http://192.168.1.5/reeed/...
 // - On Android emulator you can use http://10.0.2.2/reeed/...
-const BASE_URL = "http://localhost/reeed";
+const BASE_URL = "http://172.20.10.7/REEED";
 
 // Colors
 const PRIMARY_COLOR = "#0a7ea4";
@@ -292,7 +292,7 @@ export default function DashboardScreen({
             </View>
           ))}
 
-          <Pressable onPress={() => router.push("/notifications")} style={{ marginTop: 6 }}>
+          <Pressable onPress={() => router.push("/Notification")} style={{ marginTop: 6 }}>
             <Text style={{ color: PRIMARY_COLOR, fontWeight: "600" }}>View all</Text>
           </Pressable>
         </View>
