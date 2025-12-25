@@ -16,11 +16,19 @@ import { SafeAreaView } from "react-native-safe-area-context"
 
 import Constants from "expo-constants"
 const extra = Constants.expoConfig?.extra ?? {}
+const GOOGLE_BOOKS_API_BASE_URL = extra.GOOGLE_BOOKS_API_BASE_URL
 const GOOGLE_BOOKS_API_KEY = extra.GOOGLE_BOOKS_API_KEY
+const API_BASE_URL = extra.API_BASE_URL
 
-const PRIMARY_COLOR = "#0a7ea4"
-const BACKGROUND_COLOR = "#F9FAFB"
-const TEXT_COLOR = "#1F2937"
+const COLORS = {
+  primary: "#0a7ea4",
+  background: "#F9FAFB",
+  text: "#1F2937",
+  secondaryText: "#6B7280",
+  chipBg: "#E5F3F8",
+  cardBg: "#FFFFFF",
+  placeholder: "#9CA3AF",
+}
 
 type BookDetails = {
   id: string
@@ -32,8 +40,6 @@ type BookDetails = {
   pageCount?: number
   publishedDate?: string
   isbn13?: string | null
-
-  // ✅ Web reader links
   previewLink?: string | null
   webReaderLink?: string | null
 }
@@ -47,124 +53,102 @@ export default function BookDetailsScreen() {
   const [book, setBook] = useState<BookDetails | null>(null)
 
   useEffect(() => {
-    const load = async () => {
+    if (!id) return
+
+    const loadBook = async () => {
+      setLoading(true)
+      setErrorMsg(null)
       try {
-        setLoading(true)
-        setErrorMsg(null)
-
-        if (!id) throw new Error("Missing book id")
-
-        const url = `https://www.googleapis.com/books/v1/volumes/${encodeURIComponent(
-          id
-        )}?key=${GOOGLE_BOOKS_API_KEY}`
-        const res = await fetch(url)
-        if (!res.ok) throw new Error("Request failed")
-
+        const res = await fetch(
+          `${GOOGLE_BOOKS_API_BASE_URL}${encodeURIComponent(
+            id
+          )}?key=${GOOGLE_BOOKS_API_KEY}`
+        )
+        if (!res.ok) throw new Error("Failed to fetch book")
         const data = await res.json()
-        const info = data?.volumeInfo ?? {}
+        const info = data.volumeInfo ?? {}
 
         const thumb =
-          info?.imageLinks?.thumbnail ??
-          info?.imageLinks?.smallThumbnail ??
-          null
+          info.imageLinks?.thumbnail ?? info.imageLinks?.smallThumbnail ?? null
 
-        const safeThumb =
-          typeof thumb === "string"
-            ? thumb.replace("http://", "https://")
-            : null
-
-        // ✅ Extract ISBN-13
-        const identifiers = Array.isArray(info?.industryIdentifiers)
-          ? info.industryIdentifiers
-          : []
-        const isbn13Obj = identifiers.find((x: any) => x.type === "ISBN_13")
-        const isbn13 = isbn13Obj?.identifier ?? null
-
-        // ✅ Reader links
-        const previewLink =
-          typeof info?.previewLink === "string" ? info.previewLink : null
-
-        const webReaderLink =
-          typeof data?.accessInfo?.webReaderLink === "string"
-            ? data.accessInfo.webReaderLink
-            : null
+        const isbn13 =
+          info.industryIdentifiers?.find((x: any) => x.type === "ISBN_13")
+            ?.identifier ?? null
 
         setBook({
-          id: String(data?.id ?? id),
-          title: info?.title ?? "Untitled",
-          authors: Array.isArray(info?.authors)
-            ? info.authors.join(", ")
-            : "Unknown author",
-          description: info?.description ?? "No description available.",
-          thumbnail: safeThumb,
-          categories: Array.isArray(info?.categories)
-            ? info.categories.join(", ")
-            : "N/A",
-          pageCount: info?.pageCount,
-          publishedDate: info?.publishedDate,
+          id: data.id ?? id,
+          title: info.title ?? "Untitled",
+          authors: info.authors?.join(", ") ?? "Unknown author",
+          description: info.description ?? "No description available.",
+          thumbnail: thumb?.replace("http://", "https://") ?? null,
+          categories: info.categories?.join(", ") ?? "N/A",
+          pageCount: info.pageCount,
+          publishedDate: info.publishedDate,
           isbn13,
-          previewLink,
-          webReaderLink,
+          previewLink: info.previewLink ?? null,
+          webReaderLink: data.accessInfo?.webReaderLink ?? null,
         })
       } catch (e) {
-        setErrorMsg("Could not load book details. Please try again.")
+        setErrorMsg("Could not load book details.")
         setBook(null)
       } finally {
         setLoading(false)
       }
     }
 
-    load()
+    loadBook()
   }, [id])
 
-  // ✅ Open in-app web reader page
   const openReader = () => {
     if (!book) return
-
-    const url = book.webReaderLink || book.previewLink
-
+    const url = book.webReaderLink ?? book.previewLink
     if (!url) {
-      Alert.alert(
-        "Not available",
-        "This book does not have a Google Books preview/web reader link."
-      )
+      Alert.alert("Not available", "No preview or web reader link.")
       return
     }
-
     router.push({
       pathname: "/BookWebReader",
       params: { url, title: book.title },
     })
   }
 
-  // ✅ Your future library logic (dummy for now)
-  const addToLibrary = () => {
+  const addToLibrary = async () => {
     if (!book) return
-    console.log("Add to library:", book.id)
-    Alert.alert("Added", "Book added to your library (demo).")
+    try {
+      const res = await fetch(
+        `http://localhost/reeed/insertGoogleBook.php/insertGoogleBook.php?title=${encodeURIComponent(
+          book.title
+        )}&author=${encodeURIComponent(
+          book.authors
+        )}&category=${encodeURIComponent(book.categories)}&pageCount=${
+          book.pageCount
+        }&googleId=${encodeURIComponent(book.id)}`
+      )
+      if (!res.ok) throw new Error("Request failed")
+      Alert.alert("Added", `Book "${book.title}" added to your library.`)
+
+      
+    } catch (error) {
+      console.log(error)
+      Alert.alert("Error", "Could not add the book to your library.")
+    } finally {
+    }
+
+    //check if the book exists in our database
   }
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
-      <ScrollView
-        style={styles.container}
-        contentContainerStyle={styles.contentContainer}
-      >
-        {/* Back */}
-        <Pressable
-          onPress={() => router.back()}
-          style={({ pressed }) => [
-            styles.backButton,
-            { opacity: pressed ? 0.6 : 1 },
-          ]}
-        >
-          <FontAwesome name="chevron-left" size={20} color={TEXT_COLOR} />
+    <SafeAreaView style={styles.safeArea}>
+      <ScrollView contentContainerStyle={styles.container}>
+        {/* Back button */}
+        <Pressable style={styles.backButton} onPress={() => router.back()}>
+          <FontAwesome name="chevron-left" size={20} color={COLORS.text} />
           <Text style={styles.backText}>Back</Text>
         </Pressable>
 
         {loading && (
           <View style={styles.center}>
-            <ActivityIndicator size="large" color={PRIMARY_COLOR} />
+            <ActivityIndicator size="large" color={COLORS.primary} />
             <Text style={styles.loadingText}>Loading details...</Text>
           </View>
         )}
@@ -180,38 +164,34 @@ export default function BookDetailsScreen() {
             {/* Cover */}
             <View style={styles.coverWrap}>
               {book.thumbnail ? (
-                <Image
-                  source={{ uri: book.thumbnail }}
-                  style={styles.cover}
-                  resizeMode="cover"
-                />
+                <Image source={{ uri: book.thumbnail }} style={styles.cover} />
               ) : (
                 <View style={styles.coverPlaceholder}>
-                  <FontAwesome name="book" size={22} color="#9CA3AF" />
+                  <FontAwesome
+                    name="book"
+                    size={22}
+                    color={COLORS.placeholder}
+                  />
                   <Text style={styles.noCoverText}>No cover</Text>
                 </View>
               )}
             </View>
 
-            {/* Title + Author */}
+            {/* Title & Author */}
             <Text style={styles.title}>{book.title}</Text>
             <Text style={styles.author}>by {book.authors}</Text>
-
-            {/* IDs */}
             <Text style={styles.author}>GoogleBookID: {book.id}</Text>
-            <Text style={styles.author}>
-              ISBN-13: {book.isbn13 ?? "Not available"}
-            </Text>
+            <Text style={styles.author}>ISBN-13: {book.isbn13 ?? "N/A"}</Text>
 
             {/* Info row */}
             <View style={styles.infoRow}>
               <InfoChip icon="tag" text={book.categories} />
-              {book.pageCount ? (
+              {book.pageCount && (
                 <InfoChip icon="file-text-o" text={`${book.pageCount} pages`} />
-              ) : null}
-              {book.publishedDate ? (
+              )}
+              {book.publishedDate && (
                 <InfoChip icon="calendar" text={book.publishedDate} />
-              ) : null}
+              )}
             </View>
 
             {/* Description */}
@@ -220,25 +200,11 @@ export default function BookDetailsScreen() {
               <Text style={styles.desc}>{stripHtml(book.description)}</Text>
             </View>
 
-            {/* ✅ Read Now */}
-            <Pressable
-              style={({ pressed }) => [
-                styles.primaryButton,
-                { opacity: pressed ? 0.85 : 1 },
-              ]}
-              onPress={openReader}
-            >
+            {/* Actions */}
+            <Pressable style={styles.primaryButton} onPress={openReader}>
               <Text style={styles.primaryButtonText}>Read Now</Text>
             </Pressable>
-
-            {/* ✅ Add to Library */}
-            <Pressable
-              style={({ pressed }) => [
-                styles.secondaryButton,
-                { opacity: pressed ? 0.85 : 1 },
-              ]}
-              onPress={addToLibrary}
-            >
+            <Pressable style={styles.secondaryButton} onPress={addToLibrary}>
               <Text style={styles.secondaryButtonText}>Add to My Library</Text>
             </Pressable>
           </>
@@ -248,10 +214,10 @@ export default function BookDetailsScreen() {
   )
 }
 
-function InfoChip({ icon, text }: { icon: any; text: string }) {
+function InfoChip({ icon, text }: { icon: string; text: string }) {
   return (
     <View style={styles.chip}>
-      <FontAwesome name={icon} size={12} color={PRIMARY_COLOR} />
+      <FontAwesome name={icon} size={12} color={COLORS.primary} />
       <Text style={styles.chipText} numberOfLines={1}>
         {text}
       </Text>
@@ -259,35 +225,33 @@ function InfoChip({ icon, text }: { icon: any; text: string }) {
   )
 }
 
-// Google Books sometimes returns HTML in description
 function stripHtml(html: string) {
   return String(html ?? "").replace(/<\/?[^>]+(>|$)/g, "")
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: BACKGROUND_COLOR },
-  container: { flex: 1, backgroundColor: BACKGROUND_COLOR },
-  contentContainer: { padding: 20, paddingBottom: 40 },
+  safeArea: { flex: 1, backgroundColor: COLORS.background },
+  container: { padding: 20, paddingBottom: 40 },
 
   backButton: { flexDirection: "row", alignItems: "center", marginBottom: 10 },
   backText: {
     marginLeft: 6,
     fontSize: 16,
     fontWeight: "500",
-    color: TEXT_COLOR,
+    color: COLORS.text,
   },
 
   center: { marginTop: 40, alignItems: "center" },
-  loadingText: { marginTop: 10, fontSize: 13, color: "#6B7280" },
+  loadingText: { marginTop: 10, fontSize: 13, color: COLORS.secondaryText },
 
   infoCard: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: COLORS.cardBg,
     borderRadius: 16,
     padding: 14,
     borderWidth: 1,
     borderColor: "#E5E7EB",
   },
-  infoText: { fontSize: 13, color: "#6B7280" },
+  infoText: { fontSize: 13, color: COLORS.secondaryText },
 
   coverWrap: {
     alignSelf: "center",
@@ -296,11 +260,6 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     overflow: "hidden",
     backgroundColor: "#F3F4F6",
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 3,
     marginTop: 6,
   },
   cover: { width: "100%", height: "100%" },
@@ -310,16 +269,21 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 6,
   },
-  noCoverText: { fontSize: 12, color: "#9CA3AF" },
+  noCoverText: { fontSize: 12, color: COLORS.placeholder },
 
   title: {
     fontSize: 22,
     fontWeight: "800",
-    color: TEXT_COLOR,
+    color: COLORS.text,
     marginTop: 14,
     textAlign: "center",
   },
-  author: { fontSize: 13, color: "#6B7280", marginTop: 4, textAlign: "center" },
+  author: {
+    fontSize: 13,
+    color: COLORS.secondaryText,
+    marginTop: 4,
+    textAlign: "center",
+  },
 
   infoRow: {
     flexDirection: "row",
@@ -332,7 +296,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    backgroundColor: "#E5F3F8",
+    backgroundColor: COLORS.chipBg,
     borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 6,
@@ -341,27 +305,22 @@ const styles = StyleSheet.create({
   chipText: { fontSize: 12, color: "#374151", fontWeight: "600" },
 
   card: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: COLORS.cardBg,
     borderRadius: 16,
     padding: 16,
     marginTop: 14,
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
   },
   cardTitle: {
     fontSize: 16,
     fontWeight: "700",
-    color: TEXT_COLOR,
+    color: COLORS.text,
     marginBottom: 8,
   },
   desc: { fontSize: 13, color: "#374151", lineHeight: 19 },
 
   primaryButton: {
     marginTop: 14,
-    backgroundColor: PRIMARY_COLOR,
+    backgroundColor: COLORS.primary,
     borderRadius: 12,
     paddingVertical: 12,
     alignItems: "center",
@@ -370,7 +329,7 @@ const styles = StyleSheet.create({
 
   secondaryButton: {
     marginTop: 10,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: COLORS.cardBg,
     borderRadius: 12,
     paddingVertical: 12,
     alignItems: "center",
@@ -378,7 +337,7 @@ const styles = StyleSheet.create({
     borderColor: "#E5E7EB",
   },
   secondaryButtonText: {
-    color: PRIMARY_COLOR,
+    color: COLORS.primary,
     fontSize: 14,
     fontWeight: "700",
   },

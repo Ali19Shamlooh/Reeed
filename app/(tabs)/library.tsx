@@ -1,9 +1,16 @@
 import { Ionicons } from "@expo/vector-icons"
-import { Link, router, Stack } from "expo-router"
+import { Link, Stack } from "expo-router"
 import React, { useEffect, useState } from "react"
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import BookBox from "../components/BookBox"
+
+//importing global variables
+import Constants from "expo-constants"
+const extra = Constants.expoConfig?.extra ?? {}
+const GOOGLE_BOOKS_API_BASE_URL = extra.GOOGLE_BOOKS_API_BASE_URL
+const GOOGLE_BOOKS_API_KEY = extra.GOOGLE_BOOKS_API_KEY
+const API_BASE_URL = extra.API_BASE_URL
 
 const userId = 1
 
@@ -26,26 +33,68 @@ const mockBooks = [
 
 export default function LibraryScreen() {
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState("")
   const [dbBookIds, setDbBookIds] = useState([])
+  const [googleIds, setGoogleIds] = useState(null)
 
   useEffect(() => {
-    const getUserBookIds = () => {
-      const url = `http://localhost/reeed/getUserBooksFromdb.php?userId=${userId}`
-      
+    //retrieving bookIds from the userBook table in db
+    const fetchData = async () => {
+      try {
+        setLoading(true)
+        setDbBookIds([])
+
+        // 1️⃣ Fetch book IDs from your DB
+        const dbAPI = `http://localhost/reeed/getUserBooksFromdb.php?userId=${userId}`
+        const dbRes = await fetch(dbAPI)
+        if (!dbRes.ok) throw new Error("Request failed")
+        const data = await dbRes.json()
+        const resDbBookIds: number[] = data.bookIds // ex: [12,23,5]
+        setDbBookIds(resDbBookIds)
+        console.log(resDbBookIds)
+
+        // 2️⃣ Fetch Google IDs using the DB IDs we just got
+        const requests = resDbBookIds.map((id) =>
+          fetch(`http://localhost/reeed/getGoogleBookId.php?bookId=${id}`)
+        )
+
+        const responses = await Promise.all(requests)
+
+        const googleData: { googleId: string | null }[] = await Promise.all(
+          responses.map((res) => res.json())
+        )
+
+        const resGoogleIds = googleData
+          .map((item) => item.googleId)
+          .filter(Boolean)
+
+        setGoogleIds(resGoogleIds)
+        console.log("google Id: ", resGoogleIds)
+
+        // 3️⃣ Fetch Book data
+        
+        // const googleResponses = googleIds.map((googleId)=>{
+        //   fetch(`${GOOGLE_BOOKS_API_BASE_URL}`)
+        // })
+
+      } catch (error) {
+        console.error(error)
+      } finally {
+        setLoading(false)
+      }
     }
+    fetchData()
   }, [])
 
   // Convert library books to BookBox format
   const bookBoxData = mockBooks.map((b) => ({
-    id: b.id,
+    id: b.id, //googleID
     title: b.title,
     authors: b.author,
     thumbnail: null, // add cover later if you have it
   }))
 
   const openBook = (book: { id: string }) => {
-    router.push(`/reader/${book.id}`)
+    // router.push(`/reader/${book.id}`)
   }
 
   return (
