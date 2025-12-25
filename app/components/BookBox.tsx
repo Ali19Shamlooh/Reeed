@@ -8,16 +8,14 @@ type BookResult = {
   title: string
   authors: string
   thumbnail?: string | null
+  googleId: string
 }
 
 type Props = {
-  books: BookResult[]
-  onPressBook: (book: BookResult) => void
+  books: BookResult
+  onPressBook: (books: BookResult) => void
 }
 
-const fetchImage = async (imageUrl: string) => {
-  return await fetch(imageUrl)
-}
 export default function BookBox({ books, onPressBook }: Props) {
   if (!books.length) return null
 
@@ -26,9 +24,9 @@ export default function BookBox({ books, onPressBook }: Props) {
       <Text style={styles.resultsTitle}>Books</Text>
 
       <View style={styles.grid}>
-        {books.map((b) => (
+        {books.map((b: BookResult) => (
           <Pressable
-            key={b.bookId}
+            key={b.id}
             onPress={() => onPressBook(b)}
             style={styles.bookItem}
           >

@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons"
-import { Link, Stack } from "expo-router"
+import { Link, router, Stack } from "expo-router"
 import React, { useEffect, useState } from "react"
 import { ScrollView, StyleSheet, Text, TouchableOpacity } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
@@ -14,26 +14,16 @@ const API_BASE_URL = extra.API_BASE_URL
 
 const userId = 1
 
-// Mock data for demonstration
-const mockBooks = [
-  {
-    id: "1",
-    title: "The Great Gatsby",
-    author: "F. Scott Fitzgerald",
-    progress: 0.65,
-  },
-  {
-    id: "2",
-    title: "To Kill a Mockingbird",
-    author: "Harper Lee",
-    progress: 0.12,
-  },
-  { id: "3", title: "1984", author: "George Orwell", progress: 1.0 },
-]
+type BookResult = {
+  id: string
+  title: string
+  authors: string
+  thumbnail?: string | null
+  googleId: string
+}
 
 export default function LibraryScreen() {
   const [loading, setLoading] = useState(true)
-  const [googleIds, setGoogleIds] = useState(null)
   const [bookDetails, setBookDetails] = useState([])
 
   useEffect(() => {
@@ -67,14 +57,16 @@ export default function LibraryScreen() {
 
   // Convert library books to BookBox format
   const bookBoxData = bookDetails.map((b) => ({
-    id: b.bookId,
+    bookId: b.bookId,
     title: b.title,
     authors: b.author,
+    id: b.id,
+    googleId: b.googleId,
     thumbnail: null, // add cover later if you have it
   }))
 
-  const openBook = (book: { id: string }) => {
-    // router.push(`/reader/${book.id}`)
+  const openBook = (b: BookResult) => {
+    router.push({ pathname: "/BookDetails", params: { id: b.googleId } })
   }
 
   return (
@@ -99,7 +91,10 @@ export default function LibraryScreen() {
       {bookDetails.length > 0 ? (
         <BookBox books={bookDetails} onPressBook={openBook} />
       ) : (
-        <ScrollView style={styles.emptyContainer}>
+        <ScrollView
+          style={styles.emptyContainer}
+          contentContainerStyle={styles.emptyContent}
+        >
           <Text style={styles.emptyText}>
             Your library is empty. Upload a book to get started!
           </Text>
@@ -178,12 +173,17 @@ const styles = StyleSheet.create({
   },
   emptyContainer: {
     padding: 40,
-    alignItems: "center",
+    flex: 1,
     marginTop: 50,
     borderWidth: 1,
     borderColor: "#e5e7eb",
     borderRadius: 10,
     backgroundColor: "#fff",
+  },
+  emptyContent: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
   },
   emptyText: {
     fontSize: 16,
