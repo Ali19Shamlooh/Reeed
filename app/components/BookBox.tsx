@@ -3,6 +3,7 @@ import React from "react"
 import { Image, Pressable, StyleSheet, Text, View } from "react-native"
 
 type BookResult = {
+  [x: string]: Key | null | undefined
   id: string
   title: string
   authors: string
@@ -14,6 +15,9 @@ type Props = {
   onPressBook: (book: BookResult) => void
 }
 
+const fetchImage = async (imageUrl: string) => {
+  return await fetch(imageUrl)
+}
 export default function BookBox({ books, onPressBook }: Props) {
   if (!books.length) return null
 
@@ -24,7 +28,7 @@ export default function BookBox({ books, onPressBook }: Props) {
       <View style={styles.grid}>
         {books.map((b) => (
           <Pressable
-            key={b.id}
+            key={b.bookId}
             onPress={() => onPressBook(b)}
             style={styles.bookItem}
           >

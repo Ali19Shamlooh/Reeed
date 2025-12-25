@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons"
 import { Link, Stack } from "expo-router"
 import React, { useEffect, useState } from "react"
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native"
+import { ScrollView, StyleSheet, Text, TouchableOpacity } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import BookBox from "../components/BookBox"
 
@@ -33,49 +33,29 @@ const mockBooks = [
 
 export default function LibraryScreen() {
   const [loading, setLoading] = useState(true)
-  const [dbBookIds, setDbBookIds] = useState([])
   const [googleIds, setGoogleIds] = useState(null)
+  const [bookDetails, setBookDetails] = useState([])
 
   useEffect(() => {
     //retrieving bookIds from the userBook table in db
     const fetchData = async () => {
       try {
         setLoading(true)
-        setDbBookIds([])
 
-        // 1️⃣ Fetch book IDs from your DB
-        const dbAPI = `http://localhost/reeed/getUserBooksFromdb.php?userId=${userId}`
-        const dbRes = await fetch(dbAPI)
-        if (!dbRes.ok) throw new Error("Request failed")
-        const data = await dbRes.json()
-        const resDbBookIds: number[] = data.bookIds // ex: [12,23,5]
-        setDbBookIds(resDbBookIds)
-        console.log(resDbBookIds)
+        // 1️⃣ Fetch my book list  from your DB
 
-        // 2️⃣ Fetch Google IDs using the DB IDs we just got
-        const requests = resDbBookIds.map((id) =>
-          fetch(`http://localhost/reeed/getGoogleBookId.php?bookId=${id}`)
+        const response = await fetch(
+          `http://localhost/reeed/getLibraryBooks.php?userId=${userId}`
         )
 
-        const responses = await Promise.all(requests)
+        if (!response) {
+          throw new Error("Network Error was no ok ")
+        }
 
-        const googleData: { googleId: string | null }[] = await Promise.all(
-          responses.map((res) => res.json())
-        )
-
-        const resGoogleIds = googleData
-          .map((item) => item.googleId)
-          .filter(Boolean)
-
-        setGoogleIds(resGoogleIds)
-        console.log("google Id: ", resGoogleIds)
-
-        // 3️⃣ Fetch Book data
-        
-        // const googleResponses = googleIds.map((googleId)=>{
-        //   fetch(`${GOOGLE_BOOKS_API_BASE_URL}`)
-        // })
-
+        const jsonData = await response.json()
+        setBookDetails(jsonData)
+        console.log(jsonData)
+        setLoading(false)
       } catch (error) {
         console.error(error)
       } finally {
@@ -86,8 +66,8 @@ export default function LibraryScreen() {
   }, [])
 
   // Convert library books to BookBox format
-  const bookBoxData = mockBooks.map((b) => ({
-    id: b.id, //googleID
+  const bookBoxData = bookDetails.map((b) => ({
+    id: b.bookId,
     title: b.title,
     authors: b.author,
     thumbnail: null, // add cover later if you have it
@@ -114,12 +94,12 @@ export default function LibraryScreen() {
         }}
       />
 
-      <Text style={styles.header}>Your Books ({bookBoxData.length})</Text>
+      <Text style={styles.header}>Your Books ({bookDetails.length})</Text>
 
-      {bookBoxData.length > 0 ? (
-        <BookBox books={bookBoxData} onPressBook={openBook} />
+      {bookDetails.length > 0 ? (
+        <BookBox books={bookDetails} onPressBook={openBook} />
       ) : (
-        <View style={styles.emptyContainer}>
+        <ScrollView style={styles.emptyContainer}>
           <Text style={styles.emptyText}>
             Your library is empty. Upload a book to get started!
           </Text>
@@ -129,7 +109,7 @@ export default function LibraryScreen() {
               <Text style={styles.uploadButtonText}>Upload Book</Text>
             </TouchableOpacity>
           </Link>
-        </View>
+        </ScrollView>
       )}
     </SafeAreaView>
   )

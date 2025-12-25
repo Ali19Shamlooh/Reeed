@@ -75,10 +75,7 @@ export default function SearchTabScreen() {
         ? authorsArr.join(", ")
         : "Unknown author"
 
-      const thumb =
-        it?.volumeInfo?.imageLinks?.thumbnail ??
-        it?.volumeInfo?.imageLinks?.smallThumbnail ??
-        null
+      const thumb = it?.volumeInfo?.imageLinks?.thumbnail ?? null
 
       const safeThumb =
         typeof thumb === "string" ? thumb.replace("http://", "https://") : null

@@ -114,6 +114,9 @@ export default function BookDetailsScreen() {
     })
   }
 
+  const coverPage = book?.thumbnail
+  console.log("coverPage : ", coverPage)
+
   const addToLibrary = async () => {
     if (!book) return
     try {
@@ -126,14 +129,17 @@ export default function BookDetailsScreen() {
           book.pageCount
         }&googleId=${encodeURIComponent(book.id)}&userId=${encodeURIComponent(
           userId
-        )}`
+        )}&thumbnail=${encodeURIComponent(book.thumbnail)}`
       )
+      console.log(book.thumbnail)
+      const insRes = await res.json()
 
-      if (!res.ok) throw new Error("Request failed")
-
-      Alert.alert("Added", `Book "${book.title}" added to your library.`)
+      if (!res.ok) {
+        throw new Error("Request failed")
+      } else {
+        Alert.alert("Added", `Book "${book.title}" added to your library.`)
+      }
     } catch (error) {
-      console.log(error)
       Alert.alert("Error", "Could not add the book to your library.")
     } finally {
     }
@@ -186,6 +192,9 @@ export default function BookDetailsScreen() {
             <Text style={styles.author}>by {book.authors}</Text>
             <Text style={styles.author}>GoogleBookID: {book.id}</Text>
             <Text style={styles.author}>ISBN-13: {book.isbn13 ?? "N/A"}</Text>
+            <Text style={styles.author}>
+              Thumbnail: {book.thumbnail ?? "N/A"}
+            </Text>
 
             {/* Info row */}
             <View style={styles.infoRow}>
