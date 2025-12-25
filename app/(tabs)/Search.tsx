@@ -3,7 +3,6 @@ import { router } from "expo-router";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
-  Image,
   Keyboard,
   Pressable,
   ScrollView,
@@ -11,18 +10,16 @@ import {
   Text,
   TextInput,
   View,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+} from "react-native"
+import { SafeAreaView } from "react-native-safe-area-context"
+import BookBox from "../components/BookBox"
 
 const PRIMARY_COLOR = "#0a7ea4";
 const BACKGROUND_COLOR = "#F9FAFB";
 const TEXT_COLOR = "#1F2937";
 
-// ✅ IMPORTANT
-// Web: localhost works
-// Phone: replace localhost with your PC IP, e.g. http://192.168.1.10/reeed
-const PHP_BASE_URL = "http://127.0.0.1/reeed";
-const url = `${PHP_BASE_URL}/searchUsers.php?q=${encodeURIComponent("")}`;
+// ✅ change this
+const API_BASE_URL = "http://localhost/reeed/"
 
 type Mode = "title" | "author" | "users";
 
@@ -74,10 +71,7 @@ export default function SearchTabScreen() {
       const authorsArr: string[] = it?.volumeInfo?.authors ?? [];
       const authors = authorsArr.length ? authorsArr.join(", ") : "Unknown author";
 
-      const thumb =
-        it?.volumeInfo?.imageLinks?.thumbnail ??
-        it?.volumeInfo?.imageLinks?.smallThumbnail ??
-        null;
+      const thumb = it?.volumeInfo?.imageLinks?.thumbnail ?? null
 
       const safeThumb =
         typeof thumb === "string" ? thumb.replace("http://", "https://") : null;
@@ -193,29 +187,7 @@ export default function SearchTabScreen() {
         )}
 
         {/* BOOK RESULTS */}
-        {!loading && bookResults.length > 0 && (
-          <View style={styles.resultsCard}>
-            <Text style={styles.resultsTitle}>Books</Text>
-
-            <View style={styles.grid}>
-              {bookResults.map((b) => (
-                <Pressable key={b.id} onPress={() => openBook(b)} style={styles.bookItem}>
-                  {b.thumbnail ? (
-                    <Image source={{ uri: b.thumbnail }} style={styles.cover} />
-                  ) : (
-                    <View style={styles.coverPlaceholder}>
-                      <FontAwesome name="book" size={18} color="#9CA3AF" />
-                      <Text style={styles.noCoverText}>No cover</Text>
-                    </View>
-                  )}
-                  <Text style={styles.bookTitle} numberOfLines={2}>
-                    {b.title}
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
-          </View>
-        )}
+        {!loading && <BookBox books={bookResults} onPressBook={openBook} />}
 
         {/* USER RESULTS */}
         {!loading && userResults.length > 0 && (

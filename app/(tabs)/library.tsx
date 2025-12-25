@@ -1,15 +1,18 @@
 import { Ionicons } from "@expo/vector-icons"
 import { Link, Stack } from "expo-router"
-import React from "react"
-import {
-  FlatList,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native"
+import React, { useEffect, useState } from "react"
+import { ScrollView, StyleSheet, Text, TouchableOpacity } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
+import BookBox from "../components/BookBox"
 
+//importing global variables
+import Constants from "expo-constants"
+const extra = Constants.expoConfig?.extra ?? {}
+const GOOGLE_BOOKS_API_BASE_URL = extra.GOOGLE_BOOKS_API_BASE_URL
+const GOOGLE_BOOKS_API_KEY = extra.GOOGLE_BOOKS_API_KEY
+const API_BASE_URL = extra.API_BASE_URL
+
+const userId = 1
 
 // Mock data for demonstration
 const mockBooks = [
@@ -28,37 +31,52 @@ const mockBooks = [
   { id: "3", title: "1984", author: "George Orwell", progress: 1.0 },
 ]
 
-const BookItem = ({ item }: { item: (typeof mockBooks)[0] }) => {
-  const isComplete = item.progress === 1.0
-  const progressText = isComplete
-    ? "Completed"
-    : `${Math.round(item.progress * 100)}% Read`
-
-  return (
-    <Link href={`/reader/${item.id}`} asChild>
-      <TouchableOpacity style={styles.bookCard}>
-        <View style={styles.textContainer}>
-          <Text style={styles.bookTitle}>{item.title}</Text>
-          <Text style={styles.bookAuthor}>{item.author}</Text>
-        </View>
-        <View style={styles.progressContainer}>
-          <Text style={isComplete ? styles.completeText : styles.progressText}>
-            {progressText}
-          </Text>
-          <Ionicons
-            name={
-              isComplete ? "checkmark-circle" : "arrow-forward-circle-outline"
-            }
-            size={28}
-            color={isComplete ? "#10b981" : "#0a7ea4"}
-          />
-        </View>
-      </TouchableOpacity>
-    </Link>
-  )
-}
-
 export default function LibraryScreen() {
+  const [loading, setLoading] = useState(true)
+  const [googleIds, setGoogleIds] = useState(null)
+  const [bookDetails, setBookDetails] = useState([])
+
+  useEffect(() => {
+    //retrieving bookIds from the userBook table in db
+    const fetchData = async () => {
+      try {
+        setLoading(true)
+
+        // 1️⃣ Fetch my book list  from your DB
+
+        const response = await fetch(
+          `http://localhost/reeed/getLibraryBooks.php?userId=${userId}`
+        )
+
+        if (!response) {
+          throw new Error("Network Error was no ok ")
+        }
+
+        const jsonData = await response.json()
+        setBookDetails(jsonData)
+        console.log(jsonData)
+        setLoading(false)
+      } catch (error) {
+        console.error(error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchData()
+  }, [])
+
+  // Convert library books to BookBox format
+  const bookBoxData = bookDetails.map((b) => ({
+    id: b.bookId,
+    title: b.title,
+    authors: b.author,
+    thumbnail: null, // add cover later if you have it
+  }))
+
+  const openBook = (book: { id: string }) => {
+    // router.push(`/reader/${book.id}`)
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       <Stack.Screen
@@ -76,26 +94,23 @@ export default function LibraryScreen() {
         }}
       />
 
-      <Text style={styles.header}>Your Books ({mockBooks.length})</Text>
+      <Text style={styles.header}>Your Books ({bookDetails.length})</Text>
 
-      <FlatList
-        data={mockBooks}
-        renderItem={BookItem}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContent}
-        ListEmptyComponent={() => (
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>
-              Your library is empty. Upload a book to get started!
-            </Text>
-            <Link href="/(tabs)/upload-book" asChild>
-              <TouchableOpacity style={styles.uploadButton}>
-                <Text style={styles.uploadButtonText}>Upload Book</Text>
-              </TouchableOpacity>
-            </Link>
-          </View>
-        )}
-      />
+      {bookDetails.length > 0 ? (
+        <BookBox books={bookDetails} onPressBook={openBook} />
+      ) : (
+        <ScrollView style={styles.emptyContainer}>
+          <Text style={styles.emptyText}>
+            Your library is empty. Upload a book to get started!
+          </Text>
+
+          <Link href="/(tabs)/upload-book" asChild>
+            <TouchableOpacity style={styles.uploadButton}>
+              <Text style={styles.uploadButtonText}>Upload Book</Text>
+            </TouchableOpacity>
+          </Link>
+        </ScrollView>
+      )}
     </SafeAreaView>
   )
 }

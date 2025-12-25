@@ -25,7 +25,7 @@ const PRIMARY_COLOR = "#0a7ea4";
 const BACKGROUND_COLOR = "#F9FAFB";
 const TEXT_COLOR = "#1F2937";
 
-// --- Bookmark Card Types ---
+// --- Types matching ERD ---
 export type BookmarkItem = {
   id: number | string;
   bookTitle: string;
@@ -39,36 +39,37 @@ export type BookmarksCardProps = {
 
 // ---- DUMMY BOOKMARKS ----
 const dummyBookmarks: BookmarkItem[] = [
-  { id: 1, bookTitle: "Atomic Habits", currentPage: 120, totalPages: 280 },
-  { id: 2, bookTitle: "The Alchemist", currentPage: 45, totalPages: 200 },
-  { id: 3, bookTitle: "Rich Dad Poor Dad", currentPage: 72, totalPages: 207 },
-];
-
-// --- API response shapes (IMPORTANT) ---
-type FinishedBooksResponse = {
-  userName: string;
-  finishedBooks: number;
-  pagesRead: number; // ✅ use consistent casing
-};
-
-type LastSessionResponse = {
-  bookId: number;
-  title: string;
-  author: string;
-  pagesRead: number;
-  pageNumber: number;
-  pageCount: number;
-  period: number; // minutes
-};
+  {
+    id: 1,
+    bookTitle: "Atomic Habits",
+    currentPage: 120,
+    totalPages: 280,
+  },
+  {
+    id: 2,
+    bookTitle: "The Alchemist",
+    currentPage: 45,
+    totalPages: 200,
+  },
+  {
+    id: 3,
+    bookTitle: "Rich Dad Poor Dad",
+    currentPage: 72,
+    totalPages: 207,
+  },
+]
 
 type Notification = {
-  notifId: number;
-  userId: number;
-  message: string;
-  type: string;
-  isRead: boolean;
-  timestamp: string;
-};
+  notifId: number
+  userId: number
+  message: string
+  type: string
+  isRead: boolean
+  timestamp: string
+}
+
+
+// --- Screen ---
 
 export default function DashboardScreen({
   bookmarks = dummyBookmarks,
