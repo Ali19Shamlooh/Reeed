@@ -30,6 +30,8 @@ const COLORS = {
   placeholder: "#9CA3AF",
 }
 
+const userId = 1
+
 type BookDetails = {
   id: string
   title: string
@@ -116,18 +118,20 @@ export default function BookDetailsScreen() {
     if (!book) return
     try {
       const res = await fetch(
-        `http://localhost/reeed/insertGoogleBook.php/insertGoogleBook.php?title=${encodeURIComponent(
+        `http://localhost/reeed/insertGoogleBook.php?title=${encodeURIComponent(
           book.title
         )}&author=${encodeURIComponent(
           book.authors
         )}&category=${encodeURIComponent(book.categories)}&pageCount=${
           book.pageCount
-        }&googleId=${encodeURIComponent(book.id)}`
+        }&googleId=${encodeURIComponent(book.id)}&userId=${encodeURIComponent(
+          userId
+        )}`
       )
-      if (!res.ok) throw new Error("Request failed")
-      Alert.alert("Added", `Book "${book.title}" added to your library.`)
 
-      
+      if (!res.ok) throw new Error("Request failed")
+
+      Alert.alert("Added", `Book "${book.title}" added to your library.`)
     } catch (error) {
       console.log(error)
       Alert.alert("Error", "Could not add the book to your library.")
