@@ -2,12 +2,12 @@ import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React from "react";
 import {
-    Image,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -66,11 +66,11 @@ export default function UserDetailsScreen() {
       >
         {/* Back */}
         <Pressable
-          onPress={() => router.back()}
+          onPress={() => router.push("/(tabs)/Search")}
           style={({ pressed }) => [
             styles.backButton,
             { opacity: pressed ? 0.6 : 1 },
-          ]}
+          ]}  
         >
           <FontAwesome name="chevron-left" size={20} color={TEXT_COLOR} />
           <Text style={styles.backText}>Back</Text>
