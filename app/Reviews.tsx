@@ -1,7 +1,7 @@
 // app/(tabs)/reviews.tsx
-import FontAwesome from "@expo/vector-icons/FontAwesome";
-import { useRouter } from "expo-router";
-import React, { useMemo, useState } from "react";
+import FontAwesome from "@expo/vector-icons/FontAwesome"
+import { useRouter } from "expo-router"
+import React, { useMemo, useState } from "react"
 import {
   Alert,
   Pressable,
@@ -9,24 +9,25 @@ import {
   StyleSheet,
   Text,
   View,
-} from "react-native";
+} from "react-native"
+import { SafeAreaView } from "react-native-safe-area-context"
 
-const PRIMARY_COLOR = "#0a7ea4";
-const BACKGROUND_COLOR = "#F9FAFB";
-const TEXT_COLOR = "#1F2937";
+const PRIMARY_COLOR = "#0a7ea4"
+const BACKGROUND_COLOR = "#F9FAFB"
+const TEXT_COLOR = "#1F2937"
 
 type ReviewItem = {
-  id: number | string;
-  bookTitle: string;
-  bookAuthor: string;
-  rating: number;
-  reviewText: string;
-  timestamp: string;
+  id: number | string
+  bookTitle: string
+  bookAuthor: string
+  rating: number
+  reviewText: string
+  timestamp: string
 
-  likes: number;
-  likedByMe: boolean;
-  reportedByMe: boolean;
-};
+  likes: number
+  likedByMe: boolean
+  reportedByMe: boolean
+}
 
 const initialReviews: ReviewItem[] = [
   {
@@ -45,7 +46,8 @@ const initialReviews: ReviewItem[] = [
     bookTitle: "Atomic Habits",
     bookAuthor: "James Clear",
     rating: 4,
-    reviewText: "Very practical and easy to follow. Helped me build better habits.",
+    reviewText:
+      "Very practical and easy to follow. Helped me build better habits.",
     timestamp: "2025-01-20",
     likes: 7,
     likedByMe: true,
@@ -62,31 +64,31 @@ const initialReviews: ReviewItem[] = [
     likedByMe: false,
     reportedByMe: false,
   },
-];
+]
 
 export default function ReviewsTabScreen() {
-  const router = useRouter();
-  const [reviews, setReviews] = useState<ReviewItem[]>(initialReviews);
+  const router = useRouter()
+  const [reviews, setReviews] = useState<ReviewItem[]>(initialReviews)
 
-  const totalReviews = useMemo(() => reviews.length, [reviews]);
+  const totalReviews = useMemo(() => reviews.length, [reviews])
 
   const toggleLike = (reviewId: ReviewItem["id"]) => {
     setReviews((prev) =>
       prev.map((r) => {
-        if (r.id !== reviewId) return r;
+        if (r.id !== reviewId) return r
 
-        const nextLiked = !r.likedByMe;
-        const nextLikes = nextLiked ? r.likes + 1 : Math.max(0, r.likes - 1);
+        const nextLiked = !r.likedByMe
+        const nextLikes = nextLiked ? r.likes + 1 : Math.max(0, r.likes - 1)
 
-        return { ...r, likedByMe: nextLiked, likes: nextLikes };
+        return { ...r, likedByMe: nextLiked, likes: nextLikes }
       })
-    );
-  };
+    )
+  }
 
   const reportReview = (review: ReviewItem) => {
     if (review.reportedByMe) {
-      Alert.alert("Already reported", "You already reported this review.");
-      return;
+      Alert.alert("Already reported", "You already reported this review.")
+      return
     }
 
     Alert.alert(
@@ -101,16 +103,16 @@ export default function ReviewsTabScreen() {
         },
       ],
       { cancelable: true }
-    );
-  };
+    )
+  }
 
   const submitReport = (reviewId: ReviewItem["id"]) => {
     setReviews((prev) =>
       prev.map((r) => (r.id === reviewId ? { ...r, reportedByMe: true } : r))
-    );
+    )
 
-    Alert.alert("Report sent", `Thanks. We will review it.`);
-  };
+    Alert.alert("Report sent", `Thanks. We will review it.`)
+  }
 
   // ✅ NEW: Write review button action
   const goToWriteReview = () => {
@@ -120,14 +122,11 @@ export default function ReviewsTabScreen() {
         // optional params if you want later
         // bookTitle: "Atomic Habits"
       },
-    });
-  };
+    })
+  }
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.contentContainer}
-    >
+    <SafeAreaView style={{ flex: 1 }}>
       {/* 🔙 Back Button */}
       <Pressable
         onPress={() => router.push("/(tabs)/Home")}
@@ -176,73 +175,77 @@ export default function ReviewsTabScreen() {
           </Text>
         </View>
       )}
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.contentContainer}
+      >
+        {/* Reviews list */}
+        {reviews.map((review) => (
+          <View key={review.id} style={styles.card}>
+            <View style={styles.cardHeaderRow}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.bookTitle}>{review.bookTitle}</Text>
+                <Text style={styles.bookAuthor}>by {review.bookAuthor}</Text>
+              </View>
 
-      {/* Reviews list */}
-      {reviews.map((review) => (
-        <View key={review.id} style={styles.card}>
-          <View style={styles.cardHeaderRow}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.bookTitle}>{review.bookTitle}</Text>
-              <Text style={styles.bookAuthor}>by {review.bookAuthor}</Text>
+              <View style={styles.ratingRow}>
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <FontAwesome
+                    key={i}
+                    name={i < review.rating ? "star" : "star-o"}
+                    size={16}
+                    color={PRIMARY_COLOR}
+                  />
+                ))}
+              </View>
             </View>
 
-            <View style={styles.ratingRow}>
-              {Array.from({ length: 5 }).map((_, i) => (
+            <Text style={styles.reviewText}>{review.reviewText}</Text>
+            <Text style={styles.dateText}>Reviewed on {review.timestamp}</Text>
+
+            {/* ✅ Actions row */}
+            <View style={styles.actionsRow}>
+              {/* Like */}
+              <Pressable
+                onPress={() => toggleLike(review.id)}
+                style={({ pressed }) => [
+                  styles.actionButton,
+                  { opacity: pressed ? 0.7 : 1 },
+                ]}
+              >
                 <FontAwesome
-                  key={i}
-                  name={i < review.rating ? "star" : "star-o"}
+                  name={review.likedByMe ? "heart" : "heart-o"}
                   size={16}
-                  color={PRIMARY_COLOR}
+                  color={review.likedByMe ? "#EF4444" : PRIMARY_COLOR}
                 />
-              ))}
+                <Text style={styles.actionText}>
+                  {review.likedByMe ? "Liked" : "Like"} · {review.likes}
+                </Text>
+              </Pressable>
+
+              {/* Report */}
+              <Pressable
+                onPress={() => reportReview(review)}
+                style={({ pressed }) => [
+                  styles.actionButton,
+                  { opacity: pressed ? 0.7 : 1 },
+                ]}
+              >
+                <FontAwesome
+                  name="flag"
+                  size={16}
+                  color={review.reportedByMe ? "#6B7280" : PRIMARY_COLOR}
+                />
+                <Text style={styles.actionText}>
+                  {review.reportedByMe ? "Reported" : "Report"}
+                </Text>
+              </Pressable>
             </View>
           </View>
-
-          <Text style={styles.reviewText}>{review.reviewText}</Text>
-          <Text style={styles.dateText}>Reviewed on {review.timestamp}</Text>
-
-          {/* ✅ Actions row */}
-          <View style={styles.actionsRow}>
-            {/* Like */}
-            <Pressable
-              onPress={() => toggleLike(review.id)}
-              style={({ pressed }) => [
-                styles.actionButton,
-                { opacity: pressed ? 0.7 : 1 },
-              ]}
-            >
-              <FontAwesome
-                name={review.likedByMe ? "heart" : "heart-o"}
-                size={16}
-                color={review.likedByMe ? "#EF4444" : PRIMARY_COLOR}
-              />
-              <Text style={styles.actionText}>
-                {review.likedByMe ? "Liked" : "Like"} · {review.likes}
-              </Text>
-            </Pressable>
-
-            {/* Report */}
-            <Pressable
-              onPress={() => reportReview(review)}
-              style={({ pressed }) => [
-                styles.actionButton,
-                { opacity: pressed ? 0.7 : 1 },
-              ]}
-            >
-              <FontAwesome
-                name="flag"
-                size={16}
-                color={review.reportedByMe ? "#6B7280" : PRIMARY_COLOR}
-              />
-              <Text style={styles.actionText}>
-                {review.reportedByMe ? "Reported" : "Report"}
-              </Text>
-            </Pressable>
-          </View>
-        </View>
-      ))}
-    </ScrollView>
-  );
+        ))}
+      </ScrollView>
+    </SafeAreaView>
+  )
 }
 
 const styles = StyleSheet.create({
@@ -250,7 +253,12 @@ const styles = StyleSheet.create({
   contentContainer: { padding: 20, paddingBottom: 40 },
 
   backButton: { flexDirection: "row", alignItems: "center", marginBottom: 10 },
-  backText: { marginLeft: 6, fontSize: 16, fontWeight: "500", color: TEXT_COLOR },
+  backText: {
+    marginLeft: 6,
+    fontSize: 16,
+    fontWeight: "500",
+    color: TEXT_COLOR,
+  },
 
   header: { marginBottom: 12 },
   title: { fontSize: 24, fontWeight: "700", color: TEXT_COLOR },
@@ -292,7 +300,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 6,
   },
-  cardHeaderRow: { flexDirection: "row", justifyContent: "space-between", marginBottom: 8 },
+  cardHeaderRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 8,
+  },
 
   bookTitle: { fontSize: 16, fontWeight: "600", color: TEXT_COLOR },
   bookAuthor: { fontSize: 13, color: "#6B7280", marginTop: 2 },
@@ -327,6 +339,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 16,
   },
-  emptyTitle: { fontSize: 16, fontWeight: "600", marginBottom: 4, color: TEXT_COLOR },
+  emptyTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    marginBottom: 4,
+    color: TEXT_COLOR,
+  },
   emptyText: { fontSize: 13, color: "#6B7280", textAlign: "center" },
-});
+})
