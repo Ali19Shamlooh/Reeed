@@ -1,8 +1,8 @@
 // app/BookDetails.tsx
-import FontAwesome from "@expo/vector-icons/FontAwesome";
-import Constants from "expo-constants";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import FontAwesome from "@expo/vector-icons/FontAwesome"
+import Constants from "expo-constants"
+import { useLocalSearchParams, useRouter } from "expo-router"
+import React, { useEffect, useState } from "react"
 import {
   ActivityIndicator,
   Alert,
@@ -12,18 +12,20 @@ import {
   StyleSheet,
   Text,
   View,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { auth } from "../firebaseConfig";
+} from "react-native"
+import { SafeAreaView } from "react-native-safe-area-context"
+import { auth } from "../firebaseConfig"
 
 // ✅ Use ONE base URL for all your PHP calls (PC IP for iPhone)
 // Make sure this matches your folder name exactly (reeed vs REEED)
-const BASE_URL = "http://192.168.100.8/reeed";
-
+const BASE_URL =
+  // Platform.OS == "web" ?
+  "http://localhost/reeed"
+// : 'http://192.168.100.8/reeed'
 // Expo extra (Google Books)
-const extra = Constants.expoConfig?.extra ?? {};
-const GOOGLE_BOOKS_API_BASE_URL = extra.GOOGLE_BOOKS_API_BASE_URL;
-const GOOGLE_BOOKS_API_KEY = extra.GOOGLE_BOOKS_API_KEY;
+const extra = Constants.expoConfig?.extra ?? {}
+const GOOGLE_BOOKS_API_BASE_URL = extra.GOOGLE_BOOKS_API_BASE_URL
+const GOOGLE_BOOKS_API_KEY = extra.GOOGLE_BOOKS_API_KEY
 
 const COLORS = {
   primary: "#0a7ea4",
@@ -33,52 +35,54 @@ const COLORS = {
   chipBg: "#E5F3F8",
   cardBg: "#FFFFFF",
   placeholder: "#9CA3AF",
-};
+}
 
 type BookDetails = {
-  id: string;
-  title: string;
-  authors: string;
-  description: string;
-  thumbnail?: string | null;
-  categories: string;
-  pageCount?: number;
-  publishedDate?: string;
-  isbn13?: string | null;
-  previewLink?: string | null;
-  webReaderLink?: string | null;
-};
+  id: string
+  title: string
+  authors: string
+  description: string
+  thumbnail?: string | null
+  categories: string
+  pageCount?: number
+  publishedDate?: string
+  isbn13?: string | null
+  previewLink?: string | null
+  webReaderLink?: string | null
+}
 
 export default function BookDetailsScreen() {
-  const router = useRouter();
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const router = useRouter()
+  const { id } = useLocalSearchParams<{ id: string }>()
 
-  const [loading, setLoading] = useState(true);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [book, setBook] = useState<BookDetails | null>(null);
+  const [loading, setLoading] = useState(true)
+  const [errorMsg, setErrorMsg] = useState<string | null>(null)
+  const [book, setBook] = useState<BookDetails | null>(null)
 
   useEffect(() => {
-    if (!id) return;
+    if (!id) return
 
     const loadBook = async () => {
-      setLoading(true);
-      setErrorMsg(null);
+      setLoading(true)
+      setErrorMsg(null)
 
       try {
         const res = await fetch(
-          `${GOOGLE_BOOKS_API_BASE_URL}${encodeURIComponent(id)}?key=${GOOGLE_BOOKS_API_KEY}`
-        );
-        if (!res.ok) throw new Error("Failed to fetch book");
+          `${GOOGLE_BOOKS_API_BASE_URL}${encodeURIComponent(
+            id
+          )}?key=${GOOGLE_BOOKS_API_KEY}`
+        )
+        if (!res.ok) throw new Error("Failed to fetch book")
 
-        const data = await res.json();
-        const info = data.volumeInfo ?? {};
+        const data = await res.json()
+        const info = data.volumeInfo ?? {}
 
         const thumb =
-          info.imageLinks?.thumbnail ?? info.imageLinks?.smallThumbnail ?? null;
+          info.imageLinks?.thumbnail ?? info.imageLinks?.smallThumbnail ?? null
 
         const isbn13 =
-          info.industryIdentifiers?.find((x: any) => x.type === "ISBN_13")?.identifier ??
-          null;
+          info.industryIdentifiers?.find((x: any) => x.type === "ISBN_13")
+            ?.identifier ?? null
 
         setBook({
           id: data.id ?? id,
@@ -92,73 +96,75 @@ export default function BookDetailsScreen() {
           isbn13,
           previewLink: info.previewLink ?? null,
           webReaderLink: data.accessInfo?.webReaderLink ?? null,
-        });
+        })
       } catch (e) {
-        setErrorMsg("Could not load book details.");
-        setBook(null);
+        setErrorMsg("Could not load book details.")
+        setBook(null)
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
-    };
+    }
 
-    loadBook();
-  }, [id]);
+    loadBook()
+  }, [id])
 
   const openReader = () => {
-    if (!book) return;
+    if (!book) return
 
-    const url = book.webReaderLink ?? book.previewLink;
+    const url = book.webReaderLink ?? book.previewLink
     if (!url) {
-      Alert.alert("Not available", "No preview or web reader link.");
-      return;
+      Alert.alert("Not available", "No preview or web reader link.")
+      return
     }
 
     router.push({
       pathname: "/BookWebReader",
       params: { url, title: book.title },
-    });
-  };
+    })
+  }
 
   // ✅ safer JSON helper
   const safeJson = (text: string) => {
     try {
-      return JSON.parse(text);
+      return JSON.parse(text)
     } catch {
-      return null;
+      return null
     }
-  };
+  }
 
   const addToLibrary = async () => {
-    if (!book) return;
+    if (!book) return
 
     try {
       // ✅ must be logged in
-      const user = auth.currentUser;
+      const user = auth.currentUser
       if (!user?.uid) {
-        Alert.alert("Error", "You are not logged in.");
-        router.push("/login"); // change route if yours is different
-        return;
+        Alert.alert("Error", "You are not logged in.")
+        router.push("/login") // change route if yours is different
+        return
       }
 
       // ✅ get DB uId using firebase uid
-      const getUserIdUrl = `${BASE_URL}/getUserId.php?fireId=${encodeURIComponent(user.uid)}`;
-      console.log("getUserIdUrl:", getUserIdUrl);
+      const getUserIdUrl = `${BASE_URL}/getUserId.php?fireId=${encodeURIComponent(
+        user.uid
+      )}`
+      console.log("getUserIdUrl:", getUserIdUrl)
 
-      const userIdRes = await fetch(getUserIdUrl);
-      const userIdText = await userIdRes.text();
-      console.log("getUserId status:", userIdRes.status);
-      console.log("getUserId raw:", userIdText);
+      const userIdRes = await fetch(getUserIdUrl)
+      const userIdText = await userIdRes.text()
+      console.log("getUserId status:", userIdRes.status)
+      console.log("getUserId raw:", userIdText)
 
-      const dbId = safeJson(userIdText);
-      const dbUserId = dbId?.uId;
+      const dbId = safeJson(userIdText)
+      const dbUserId = dbId?.uId
 
       if (!userIdRes.ok || !dbUserId) {
-        throw new Error(dbId?.error || "User id not found in database.");
+        throw new Error(dbId?.error || "User id not found in database.")
       }
 
       // ✅ build request safely
-      const thumbnail = book.thumbnail ?? ""; // avoid null in encodeURIComponent
-      const pageCount = book.pageCount ?? 0;
+      const thumbnail = book.thumbnail ?? "" // avoid null in encodeURIComponent
+      const pageCount = book.pageCount ?? 0
 
       const insertUrl =
         `${BASE_URL}/insertGoogleBook.php?` +
@@ -168,30 +174,33 @@ export default function BookDetailsScreen() {
         `&pageCount=${encodeURIComponent(String(pageCount))}` +
         `&googleId=${encodeURIComponent(book.id)}` +
         `&userId=${encodeURIComponent(String(dbUserId))}` +
-        `&thumbnail=${encodeURIComponent(thumbnail)}`;
+        `&thumbnail=${encodeURIComponent(thumbnail)}`
 
-      console.log("insertUrl:", insertUrl);
+      console.log("insertUrl:", insertUrl)
 
-      const res = await fetch(insertUrl);
-      const text = await res.text();
-      console.log("insert status:", res.status);
-      console.log("insert raw:", text);
+      const res = await fetch(insertUrl)
+      const text = await res.text()
+      console.log("insert status:", res.status)
+      console.log("insert raw:", text)
 
-      const data = safeJson(text);
+      const data = safeJson(text)
 
       if (!res.ok) {
-        throw new Error(data?.error || "Request failed (insertGoogleBook.php).");
+        throw new Error(data?.error || "Request failed (insertGoogleBook.php).")
       }
 
       if (data?.error) {
-        throw new Error(data.error);
+        throw new Error(data.error)
       }
 
-      Alert.alert("Added", `Book "${book.title}" added to your library.`);
+      Alert.alert("Added", `Book "${book.title}" added to your library.`)
     } catch (error: any) {
-      Alert.alert("Error", error?.message ?? "Could not add the book to your library.");
+      Alert.alert(
+        "Error",
+        error?.message ?? "Could not add the book to your library."
+      )
     }
-  };
+  }
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -223,7 +232,11 @@ export default function BookDetailsScreen() {
                 <Image source={{ uri: book.thumbnail }} style={styles.cover} />
               ) : (
                 <View style={styles.coverPlaceholder}>
-                  <FontAwesome name="book" size={22} color={COLORS.placeholder} />
+                  <FontAwesome
+                    name="book"
+                    size={22}
+                    color={COLORS.placeholder}
+                  />
                   <Text style={styles.noCoverText}>No cover</Text>
                 </View>
               )}
@@ -280,7 +293,7 @@ export default function BookDetailsScreen() {
         )}
       </ScrollView>
     </SafeAreaView>
-  );
+  )
 }
 
 function InfoChip({ icon, text }: { icon: string; text: string }) {
@@ -291,11 +304,11 @@ function InfoChip({ icon, text }: { icon: string; text: string }) {
         {text}
       </Text>
     </View>
-  );
+  )
 }
 
 function stripHtml(html: string) {
-  return String(html ?? "").replace(/<\/?[^>]+(>|$)/g, "");
+  return String(html ?? "").replace(/<\/?[^>]+(>|$)/g, "")
 }
 
 const styles = StyleSheet.create({
@@ -410,4 +423,4 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "700",
   },
-});
+})

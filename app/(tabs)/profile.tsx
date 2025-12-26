@@ -19,7 +19,10 @@ import { SafeAreaView } from "react-native-safe-area-context"
 import { auth, db } from "../../firebaseConfig"
 
 import Constants from "expo-constants"
-const BASE_URL = "http://localhost/reeed"
+const BASE_URL =
+  // Platform.OS == "web" ?
+  "http://localhost/reeed"
+// : 'http://192.168.100.8/reeed'
 const extra = Constants.expoConfig?.extra ?? {}
 const GOOGLE_BOOKS_API_BASE_URL = extra.GOOGLE_BOOKS_API_BASE_URL
 const GOOGLE_BOOKS_API_KEY = extra.GOOGLE_BOOKS_API_KEY
