@@ -40,7 +40,6 @@ export default function LibraryScreen() {
       const User = auth.currentUser
       const fireId = User?.uid
       const getUserId = `${BASE_URL}/getUserId.php?fireId=${fireId}`
-
       const userIdRes = await fetch(getUserId)
       const dbId = await userIdRes.json()
       const dbUserId = dbId.uId
