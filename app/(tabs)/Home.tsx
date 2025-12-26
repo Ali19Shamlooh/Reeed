@@ -12,10 +12,7 @@ import {
 } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { auth } from "../../firebaseConfig"
-const BASE_URL =
-  // Platform.OS == "web" ?
-  "http://localhost/reeed"
-// : 'http://192.168.100.8/reeed'
+const BASE_URL =  /* Platform.OS == "web" ? */  "http://localhost/reeed" /* : 'http://192.168.100.8/reeed'*/
 
 // Colors
 const PRIMARY_COLOR = "#0a7ea4"
