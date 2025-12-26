@@ -1,8 +1,8 @@
-import { Ionicons } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Stack, router } from "expo-router";
-import { doc, getDoc } from "firebase/firestore";
-import React, { useEffect, useState } from "react";
+import { Ionicons } from "@expo/vector-icons"
+import AsyncStorage from "@react-native-async-storage/async-storage"
+import { Stack, router } from "expo-router"
+import { doc, getDoc } from "firebase/firestore"
+import React, { useEffect, useState } from "react"
 import {
   ActivityIndicator,
   Alert,
@@ -13,49 +13,66 @@ import {
   Text,
   TextInput,
   View,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+} from "react-native"
+import { SafeAreaView } from "react-native-safe-area-context"
 
-import { auth, db } from "../../firebaseConfig";
+import { auth, db } from "../../firebaseConfig"
+
+import Constants from "expo-constants"
+const BASE_URL = "http://localhost/reeed"
+const extra = Constants.expoConfig?.extra ?? {}
+const GOOGLE_BOOKS_API_BASE_URL = extra.GOOGLE_BOOKS_API_BASE_URL
+const GOOGLE_BOOKS_API_KEY = extra.GOOGLE_BOOKS_API_KEY
+const API_BASE_URL = extra.API_BASE_URL
 
 // Define the structure for user data
 interface UserProfile {
-  name: string;
-  email: string;
-  readingGoal: number;
-  currentStreak: number;
-  totalBooksRead: number;
-  type?: "normal" | "admin";
+  name: string
+  email: string
+  readingGoal: number
+  currentStreak: number
+  totalBooksRead: number
+  type?: "normal" | "admin"
 }
 
-const GOAL_KEY = "reeed_page_goal"; // local storage key
+const GOAL_KEY = "reeed_page_goal" // local storage key
 
 export default function ProfileScreen() {
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [profile, setProfile] = useState<UserProfile | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
 
   // ✅ Goal modal states
-  const [goalModalVisible, setGoalModalVisible] = useState(false);
-  const [goalInput, setGoalInput] = useState("");
+  const [goalModalVisible, setGoalModalVisible] = useState(false)
+  const [goalInput, setGoalInput] = useState("")
 
-  const user = auth.currentUser;
+  const [nameModalVisible, setNameModalVisible] = useState(false)
+  const [nameInput, setNameInput] = useState("")
+  const [savingName, setSavingName] = useState(false)
+  const [uId, setUId] = useState(null)
+
+  const user = auth.currentUser
 
   // Fetch user data from Firestore
   const fetchProfile = async () => {
     if (!user) {
-      setLoading(false);
-      return;
+      setLoading(false)
+      return
     }
-
+    const fireId = user?.uid
+    const getUserId = `${BASE_URL}/getUserId.php?fireId=${fireId}`
+    const userIdRes = await fetch(getUserId)
+    const dbId = await userIdRes.json()
+    const dbUserId = dbId.uId
+    setUId(dbUserId)
     try {
-      const docRef = doc(db, "users", user.uid);
-      const docSnap = await getDoc(docRef);
+      const docRef = doc(db, "users", user.uid)
+      const docSnap = await getDoc(docRef)
 
-      let baseProfile: UserProfile;
+      let baseProfile: UserProfile
 
       if (docSnap.exists()) {
-        baseProfile = docSnap.data() as UserProfile;
+        baseProfile = docSnap.data() as UserProfile
       } else {
         baseProfile = {
           name: user.displayName || "Reader",
@@ -64,43 +81,43 @@ export default function ProfileScreen() {
           currentStreak: 0,
           totalBooksRead: 0,
           type: "normal",
-        };
-      }
-
-      // ✅ Load local goal (if exists) and override
-      const localGoal = await AsyncStorage.getItem(GOAL_KEY);
-      if (localGoal) {
-        const g = Number(localGoal);
-        if (Number.isFinite(g) && g >= 0) {
-          baseProfile.readingGoal = g;
         }
       }
 
-      setProfile(baseProfile);
+      // ✅ Load local goal (if exists) and override
+      const localGoal = await AsyncStorage.getItem(GOAL_KEY)
+      if (localGoal) {
+        const g = Number(localGoal)
+        if (Number.isFinite(g) && g >= 0) {
+          baseProfile.readingGoal = g
+        }
+      }
+
+      setProfile(baseProfile)
     } catch (error) {
-      console.error("Error fetching profile:", error);
-      Alert.alert("Error", "Could not load profile data.");
+      console.error("Error fetching profile:", error)
+      Alert.alert("Error", "Could not load profile data.")
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   useEffect(() => {
-    fetchProfile();
-  }, [user]);
+    fetchProfile()
+  }, [user])
 
   // Handle Logout
   const handleLogout = async () => {
-    setIsLoggingOut(true);
+    setIsLoggingOut(true)
     try {
-      await auth.signOut();
-      router.replace("/");
+      await auth.signOut()
+      router.replace("/")
     } catch (error) {
-      console.error("Logout error:", error);
-      Alert.alert("Error", "Failed to log out. Please check your connection.");
-      setIsLoggingOut(false);
+      console.error("Logout error:", error)
+      Alert.alert("Error", "Failed to log out. Please check your connection.")
+      setIsLoggingOut(false)
     }
-  };
+  }
 
   const userProfile: UserProfile = profile || {
     name: user?.displayName || "Reader",
@@ -109,44 +126,83 @@ export default function ProfileScreen() {
     currentStreak: 0,
     totalBooksRead: 0,
     type: "normal",
-  };
+  }
 
   // ✅ Open goal modal
   const openGoalModal = () => {
-    setGoalInput(String(userProfile.readingGoal ?? 0));
-    setGoalModalVisible(true);
-  };
+    setGoalInput(String(userProfile.readingGoal ?? 0))
+    setGoalModalVisible(true)
+  }
 
   // ✅ Save goal locally (and optionally Firestore)
   const saveGoal = async () => {
-    const num = Number(goalInput);
+    const num = Number(goalInput)
 
     if (!Number.isFinite(num) || num < 0) {
-      Alert.alert("Invalid", "Please enter a valid number (0 or more).");
-      return;
+      Alert.alert("Invalid", "Please enter a valid number (0 or more).")
+      return
     }
 
     try {
       // 1) Save locally
-      await AsyncStorage.setItem(GOAL_KEY, String(num));
+      await AsyncStorage.setItem(GOAL_KEY, String(num))
 
       // 2) Update UI immediately
       setProfile((prev) =>
-        prev ? { ...prev, readingGoal: num } : { ...userProfile, readingGoal: num }
-      );
+        prev
+          ? { ...prev, readingGoal: num }
+          : { ...userProfile, readingGoal: num }
+      )
 
       // 3) OPTIONAL: Save to Firestore too (uncomment if you want)
       // if (user) {
       //   await updateDoc(doc(db, "users", user.uid), { readingGoal: num });
       // }
 
-      setGoalModalVisible(false);
-      Alert.alert("Saved", `Your page goal is now ${num}.`);
+      setGoalModalVisible(false)
+      Alert.alert("Saved", `Your page goal is now ${num}.`)
     } catch (e) {
-      console.error(e);
-      Alert.alert("Error", "Could not save goal.");
+      console.error(e)
+      Alert.alert("Error", "Could not save goal.")
     }
-  };
+  }
+
+  const saveName = async () => {
+    if (!user) return
+
+    const trimmed = nameInput.trim()
+
+    if (trimmed.length < 2) {
+      Alert.alert("Invalid name", "Name must be at least 2 characters.")
+      return
+    }
+
+    try {
+      setSavingName(true)
+
+      console.log(uId)
+      const response = await fetch(
+        `${BASE_URL}/UpdateUserName.php?uId=${uId}&newName=${trimmed}`
+      )
+
+      const data = await response.json()
+
+      if (!data.success) {
+        throw new Error(data.message || "Update failed")
+      }
+
+      // ✅ Update UI immediately
+      setProfile((prev) => (prev ? { ...prev, name: trimmed } : prev))
+
+      setNameModalVisible(false)
+      Alert.alert("Success", "Name updated successfully.")
+    } catch (err) {
+      console.error(err)
+      Alert.alert("Error", "Could not update name.")
+    } finally {
+      setSavingName(false)
+    }
+  }
 
   // Show spinner during initial profile load OR during logout process
   if (loading || isLoggingOut) {
@@ -157,7 +213,7 @@ export default function ProfileScreen() {
           {isLoggingOut ? "Signing Out..." : "Loading Profile..."}
         </Text>
       </View>
-    );
+    )
   }
 
   return (
@@ -188,7 +244,15 @@ export default function ProfileScreen() {
 
       <View style={styles.profileHeader}>
         <Ionicons name="person-circle" size={80} color="#1e3a8a" />
-        <Text style={styles.nameText}>{userProfile.name}</Text>
+        <Pressable
+          onPress={() => {
+            setNameInput(userProfile.name)
+            setNameModalVisible(true)
+          }}
+        >
+          <Text style={styles.nameText}>{userProfile.name}</Text>
+          <Text style={styles.editHint}>Tap to edit</Text>
+        </Pressable>
         <Text style={styles.emailText}>{userProfile.email}</Text>
         <Text style={styles.userIdText}>
           User ID: {user?.uid ? user.uid.substring(0, 12) + "..." : "Guest"}
@@ -280,8 +344,58 @@ export default function ProfileScreen() {
           </View>
         </View>
       </Modal>
+      <Modal
+        visible={nameModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setNameModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>Edit Name</Text>
+            <Text style={styles.modalSubtitle}>
+              This name will be visible on your profile.
+            </Text>
+
+            <TextInput
+              value={nameInput}
+              onChangeText={setNameInput}
+              placeholder="Your name"
+              style={styles.modalInput}
+              autoFocus
+            />
+
+            <View style={styles.modalButtons}>
+              <Pressable
+                onPress={() => setNameModalVisible(false)}
+                style={({ pressed }) => [
+                  styles.modalBtn,
+                  styles.modalBtnSecondary,
+                  { opacity: pressed ? 0.8 : 1 },
+                ]}
+              >
+                <Text style={styles.modalBtnSecondaryText}>Cancel</Text>
+              </Pressable>
+
+              <Pressable
+                onPress={saveName}
+                disabled={savingName}
+                style={({ pressed }) => [
+                  styles.modalBtn,
+                  styles.modalBtnPrimary,
+                  { opacity: pressed || savingName ? 0.7 : 1 },
+                ]}
+              >
+                <Text style={styles.modalBtnPrimaryText}>
+                  {savingName ? "Saving..." : "Save"}
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
@@ -326,11 +440,21 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   statNumber: { fontSize: 28, fontWeight: "bold", color: "#1e3a8a" },
-  statLabel: { fontSize: 13, color: "#6b7280", textAlign: "center", marginTop: 5 },
+  statLabel: {
+    fontSize: 13,
+    color: "#6b7280",
+    textAlign: "center",
+    marginTop: 5,
+  },
   editHint: { fontSize: 10, color: "#9ca3af", marginTop: 4 },
 
   section: { paddingHorizontal: 20 },
-  sectionTitle: { fontSize: 18, fontWeight: "bold", color: "#333", marginBottom: 10 },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#333",
+    marginBottom: 10,
+  },
 
   roleBadge: {
     marginRight: 8,
@@ -380,6 +504,10 @@ const styles = StyleSheet.create({
   },
   modalBtnPrimary: { backgroundColor: "#0a7ea4" },
   modalBtnPrimaryText: { color: "#fff", fontWeight: "800" },
-  modalBtnSecondary: { backgroundColor: "#fff", borderWidth: 1, borderColor: "#e5e7eb" },
+  modalBtnSecondary: {
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+  },
   modalBtnSecondaryText: { color: "#111827", fontWeight: "800" },
-});
+})

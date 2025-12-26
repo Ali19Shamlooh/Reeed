@@ -63,7 +63,7 @@ export default function LibraryScreen() {
 
   const fetchData = async () => {
     try {
-      setLoading(true);
+      setLoading(true)
 
       const user = auth.currentUser;
       if (!user?.uid) {
@@ -91,6 +91,18 @@ export default function LibraryScreen() {
       // 2) Fetch library books
       const libraryUrl = `${BASE_URL}/getLibraryBooks.php?userId=${dbUserId}`;
       const jsonData = await fetchJson(libraryUrl);
+
+      if (!res.ok) {
+        throw new Error("Network Error was no ok ")
+>>>>>>> main
+      }
+
+
+      if (!dbUserId) {
+        setBookDetails([]);
+        Alert.alert("Error", "User id not found in database.");
+        return;
+      }
 
       // If your PHP returns { error: "..." }
       if (jsonData?.error) {
