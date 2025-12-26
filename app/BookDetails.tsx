@@ -1,7 +1,7 @@
 // app/BookDetails.tsx
-import FontAwesome from "@expo/vector-icons/FontAwesome";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import FontAwesome from "@expo/vector-icons/FontAwesome"
+import { useLocalSearchParams, useRouter } from "expo-router"
+import React, { useEffect, useState } from "react"
 import {
   ActivityIndicator,
   Alert,
@@ -47,12 +47,12 @@ type BookDetails = {
 }
 
 export default function BookDetailsScreen() {
-  const router = useRouter();
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const router = useRouter()
+  const { id } = useLocalSearchParams<{ id: string }>()
 
-  const [loading, setLoading] = useState(true);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [book, setBook] = useState<BookDetails | null>(null);
+  const [loading, setLoading] = useState(true)
+  const [errorMsg, setErrorMsg] = useState<string | null>(null)
+  const [book, setBook] = useState<BookDetails | null>(null)
 
   useEffect(() => {
     if (!id) return
@@ -94,9 +94,9 @@ export default function BookDetailsScreen() {
         setErrorMsg("Could not load book details.")
         setBook(null)
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
-    };
+    }
 
     loadBook()
   }, [id])
@@ -111,8 +111,8 @@ export default function BookDetailsScreen() {
     router.push({
       pathname: "/BookWebReader",
       params: { url, title: book.title },
-    });
-  };
+    })
+  }
 
   const coverPage = book?.thumbnail
   console.log("coverPage : ", coverPage)
@@ -233,26 +233,25 @@ export default function BookDetailsScreen() {
 
             {/* ✅ See Reviews */}
             {/* See Reviews */}
-<Pressable
-  style={({ pressed }) => [
-    styles.secondaryButton,
-    { opacity: pressed ? 0.85 : 1 },
-  ]}
-  onPress={() =>
-    router.push({
-      pathname: "/Reviews",
-      params: { bookId: book.id, title: book.title },
-    })
-  }
->
-  <Text style={styles.secondaryButtonText}>See Reviews</Text>
-</Pressable>
-
+            <Pressable
+              style={({ pressed }) => [
+                styles.secondaryButton,
+                { opacity: pressed ? 0.85 : 1 },
+              ]}
+              onPress={() =>
+                router.push({
+                  pathname: "/Reviews",
+                  params: { bookId: book.id, title: book.title },
+                })
+              }
+            >
+              <Text style={styles.secondaryButtonText}>See Reviews</Text>
+            </Pressable>
           </>
         )}
       </ScrollView>
     </SafeAreaView>
-  );
+  )
 }
 
 function InfoChip({ icon, text }: { icon: string; text: string }) {
@@ -263,11 +262,11 @@ function InfoChip({ icon, text }: { icon: string; text: string }) {
         {text}
       </Text>
     </View>
-  );
+  )
 }
 
 function stripHtml(html: string) {
-  return String(html ?? "").replace(/<\/?[^>]+(>|$)/g, "");
+  return String(html ?? "").replace(/<\/?[^>]+(>|$)/g, "")
 }
 
 const styles = StyleSheet.create({
@@ -326,7 +325,13 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
 
-  infoRow: { flexDirection: "row", flexWrap: "wrap", justifyContent: "center", gap: 8, marginTop: 10 },
+  infoRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "center",
+    gap: 8,
+    marginTop: 10,
+  },
   chip: {
     flexDirection: "row",
     alignItems: "center",
