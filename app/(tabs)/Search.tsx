@@ -19,7 +19,7 @@ const BACKGROUND_COLOR = "#F9FAFB";
 const TEXT_COLOR = "#1F2937";
 
 // ✅ change this
-const API_BASE_URL = "http://localhost/reeed/"
+const API_BASE_URL = "http://192.168.100.6/reeed/"
 
 type Mode = "title" | "author" | "users";
 

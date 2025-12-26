@@ -1,82 +1,119 @@
-import { Ionicons } from "@expo/vector-icons"
-import { Link, router, Stack, useFocusEffect } from "expo-router"
-import React, { useCallback, useState } from "react"
-import { StyleSheet, Text, TouchableOpacity } from "react-native"
-import { SafeAreaView } from "react-native-safe-area-context"
-import { auth } from "../../firebaseConfig"
-import BookBox from "../components/BookBox"
+import { Ionicons } from "@expo/vector-icons";
+import { Link, router, Stack, useFocusEffect } from "expo-router";
+import React, { useCallback, useState } from "react";
+import { Alert, StyleSheet, Text, TouchableOpacity } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { auth } from "../../firebaseConfig";
+import BookBox from "../components/BookBox";
 
-//importing global variables
-import { View } from "@/components/Themed"
-import Constants from "expo-constants"
-const BASE_URL = "http://localhost/reeed"
-const extra = Constants.expoConfig?.extra ?? {}
-const GOOGLE_BOOKS_API_BASE_URL = extra.GOOGLE_BOOKS_API_BASE_URL
-const GOOGLE_BOOKS_API_KEY = extra.GOOGLE_BOOKS_API_KEY
-const API_BASE_URL = extra.API_BASE_URL
+// importing global variables
+import { View } from "@/components/Themed";
+import Constants from "expo-constants";
+
+const BASE_URL = "http://192.168.100.8/reeed"; // ✅ your PC IP + folder
+
+const extra = Constants.expoConfig?.extra ?? {};
+const GOOGLE_BOOKS_API_BASE_URL = extra.GOOGLE_BOOKS_API_BASE_URL;
+const GOOGLE_BOOKS_API_KEY = extra.GOOGLE_BOOKS_API_KEY;
+const API_BASE_URL = extra.API_BASE_URL;
 
 type BookResult = {
-  id: string
-  title: string
-  authors: string
-  thumbnail?: string | null
-  googleId: string
+  id: string;
+  title: string;
+  authors: string;
+  thumbnail?: string | null;
+  googleId: string;
+};
+
+type LibraryBook = {
+  bookId: number;
+  title: string;
+  author: string;
+  id?: string | number;
+  googleId: string;
+};
+
+async function fetchJson(url: string) {
+  const res = await fetch(url);
+  const text = await res.text();
+
+  if (!res.ok) {
+    throw new Error(`HTTP ${res.status} from ${url}\n${text}`);
+  }
+
+  // If server returned HTML (common on PHP errors/404), prevent JSON parse crash
+  if (text.trim().startsWith("<")) {
+    throw new Error(
+      `Server returned HTML (not JSON) from ${url}\n${text.slice(0, 200)}`
+    );
+  }
+
+  return JSON.parse(text);
 }
 
 export default function LibraryScreen() {
-  const [loading, setLoading] = useState(true)
-  const [bookDetails, setBookDetails] = useState([])
+  const [loading, setLoading] = useState(true);
+  const [bookDetails, setBookDetails] = useState<LibraryBook[]>([]);
 
   useFocusEffect(
     useCallback(() => {
-      fetchData()
+      fetchData();
     }, [])
-  )
+  );
 
   const fetchData = async () => {
     try {
-      setLoading(true)
+      setLoading(true);
 
-      const User = auth.currentUser
-      const fireId = User?.uid
-      const getUserId = `${BASE_URL}/getUserId.php?fireId=${fireId}`
-
-      const userIdRes = await fetch(getUserId)
-      const dbId = await userIdRes.json()
-      const dbUserId = dbId.uId
-      // 1️⃣ Fetch my book list  from your DB
-
-      const response = await fetch(
-        `http://localhost/reeed/getLibraryBooks.php?userId=${dbUserId}`
-      )
-
-      if (!response) {
-        throw new Error("Network Error was no ok ")
+      const user = auth.currentUser;
+      if (!user?.uid) {
+        setBookDetails([]);
+        Alert.alert("Error", "You are not logged in.");
+        return;
       }
 
-      const jsonData = await response.json()
-      setBookDetails(jsonData)
-      setLoading(false)
-    } catch (error) {
-      console.error(error)
+      // 1) Get DB user id using Firebase uid
+      const getUserIdUrl = `${BASE_URL}/getUserId.php?fireId=${encodeURIComponent(
+        user.uid
+      )}`;
+
+      const dbId = await fetchJson(getUserIdUrl);
+
+      // If your PHP returns { uId: 2 } this is fine:
+      const dbUserId = dbId?.uId;
+
+      if (!dbUserId) {
+        setBookDetails([]);
+        Alert.alert("Error", "User id not found in database.");
+        return;
+      }
+
+      // 2) Fetch library books
+      const libraryUrl = `${BASE_URL}/getLibraryBooks.php?userId=${dbUserId}`;
+      const jsonData = await fetchJson(libraryUrl);
+
+      // If your PHP returns { error: "..." }
+      if (jsonData?.error) {
+        setBookDetails([]);
+        Alert.alert("Error", String(jsonData.error));
+        return;
+      }
+
+      // Expecting array
+      setBookDetails(Array.isArray(jsonData) ? jsonData : []);
+    } catch (error: any) {
+      console.error("LibraryScreen error:", error);
+      Alert.alert("Error", error?.message ?? "Failed to load library.");
+      setBookDetails([]);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
-  // Convert library books to BookBox format
-  const bookBoxData = bookDetails.map((b) => ({
-    bookId: b.bookId,
-    title: b.title,
-    authors: b.author,
-    id: b.id,
-    googleId: b.googleId,
-    thumbnail: null, // add cover later if you have it
-  }))
-
-  const openBook = (b: BookResult) => {
-    router.push({ pathname: "/BookDetails", params: { id: b.googleId } })
-  }
+  const openBook = (b: any) => {
+    // BookDetails expects googleId in params as "id"
+    router.push({ pathname: "/BookDetails", params: { id: String(b.googleId) } });
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -95,7 +132,9 @@ export default function LibraryScreen() {
         }}
       />
 
-      <Text style={styles.header}>Your Books ({bookDetails.length})</Text>
+      <Text style={styles.header}>
+        Your Books ({bookDetails.length})
+      </Text>
 
       {bookDetails.length > 0 ? (
         <BookBox books={bookDetails} onPressBook={openBook} />
@@ -113,7 +152,7 @@ export default function LibraryScreen() {
         </View>
       )}
     </SafeAreaView>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
@@ -129,82 +168,23 @@ const styles = StyleSheet.create({
     marginTop: -20,
     marginBottom: 5,
   },
-  listContent: {
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-  },
-  bookCard: {
-    flexDirection: "row",
-    backgroundColor: "#fff",
-    padding: 15,
-    borderRadius: 12,
-    marginBottom: 10,
-    alignItems: "center",
-    justifyContent: "space-between",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 2,
-  },
-  textContainer: {
-    flex: 1,
-    paddingRight: 10,
-  },
-  bookTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#1e3a8a",
-  },
-  bookAuthor: {
-    fontSize: 13,
-    color: "#6b7280",
-    marginTop: 2,
-  },
-  progressContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  progressText: {
-    fontSize: 14,
-    fontWeight: "500",
-    color: "#0a7ea4",
-    marginRight: 8,
-  },
-  completeText: {
-    fontSize: 14,
-    fontWeight: "500",
-    color: "#10b981",
-    marginRight: 8,
-  },
-  emptyContainer: {
-    padding: 40,
-    flex: 1,
-    marginTop: 50,
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
-    borderRadius: 10,
-    backgroundColor: "#fff",
-  },
-  emptyContent: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
   emptyText: {
     fontSize: 16,
     color: "#6b7280",
     textAlign: "center",
     marginBottom: 20,
+    paddingHorizontal: 20,
+    marginTop: 20,
   },
   uploadButton: {
     backgroundColor: "#0a7ea4",
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 8,
+    alignSelf: "center",
   },
   uploadButtonText: {
     color: "#fff",
     fontWeight: "bold",
   },
-})
+});
