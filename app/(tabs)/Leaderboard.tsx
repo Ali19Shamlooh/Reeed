@@ -4,7 +4,7 @@ import { router } from "expo-router"
 import React from "react"
 import { Pressable, StyleSheet, Text, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
-
+import { auth } from "../../firebaseConfig"
 type LeaderboardUser = {
   id: number
   name: string

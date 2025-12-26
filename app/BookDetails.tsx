@@ -13,6 +13,8 @@ import {
   View,
 } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
+import { auth } from "../firebaseConfig"
+const BASE_URL = "http://localhost/reeed"
 
 import Constants from "expo-constants"
 const extra = Constants.expoConfig?.extra ?? {}
@@ -29,8 +31,6 @@ const COLORS = {
   cardBg: "#FFFFFF",
   placeholder: "#9CA3AF",
 }
-
-const userId = 1
 
 type BookDetails = {
   id: string
@@ -119,6 +119,16 @@ export default function BookDetailsScreen() {
 
   const addToLibrary = async () => {
     if (!book) return
+
+    const User = auth.currentUser
+    const fireId = User?.uid
+    console.log(User?.uid)
+    const getUserId = `${BASE_URL}/getUserId.php?fireId=${fireId}`
+
+    const userIdRes = await fetch(getUserId)
+    const dbId = await userIdRes.json()
+    const dbUserId = dbId.uId
+
     try {
       const res = await fetch(
         `http://localhost/reeed/insertGoogleBook.php?title=${encodeURIComponent(
@@ -128,7 +138,7 @@ export default function BookDetailsScreen() {
         )}&category=${encodeURIComponent(book.categories)}&pageCount=${
           book.pageCount
         }&googleId=${encodeURIComponent(book.id)}&userId=${encodeURIComponent(
-          userId
+          dbUserId
         )}&thumbnail=${encodeURIComponent(book.thumbnail)}`
       )
       console.log(book.thumbnail)

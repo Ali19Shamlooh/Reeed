@@ -1,6 +1,13 @@
 import FontAwesome from "@expo/vector-icons/FontAwesome"
 import React from "react"
-import { Image, Pressable, StyleSheet, Text, View } from "react-native"
+import {
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native"
 
 type BookResult = {
   [x: string]: Key | null | undefined
@@ -23,7 +30,7 @@ export default function BookBox({ books, onPressBook }: Props) {
     <View style={styles.resultsCard}>
       <Text style={styles.resultsTitle}>Books</Text>
 
-      <View style={styles.grid}>
+      <ScrollView contentContainerStyle={styles.grid}>
         {books.map((b: BookResult) => (
           <Pressable
             key={b.id}
@@ -44,7 +51,7 @@ export default function BookBox({ books, onPressBook }: Props) {
             </Text>
           </Pressable>
         ))}
-      </View>
+      </ScrollView>
     </View>
   )
 }
@@ -54,7 +61,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderRadius: 16,
     padding: 14,
-    marginTop: 14,
+    marginTop: 1,
     borderWidth: 1,
     borderColor: "#E5E7EB",
   },

@@ -1,18 +1,19 @@
 import { Ionicons } from "@expo/vector-icons"
-import { Link, router, Stack } from "expo-router"
-import React, { useEffect, useState } from "react"
-import { ScrollView, StyleSheet, Text, TouchableOpacity } from "react-native"
+import { Link, router, Stack, useFocusEffect } from "expo-router"
+import React, { useCallback, useState } from "react"
+import { StyleSheet, Text, TouchableOpacity } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
+import { auth } from "../../firebaseConfig"
 import BookBox from "../components/BookBox"
 
 //importing global variables
+import { View } from "@/components/Themed"
 import Constants from "expo-constants"
+const BASE_URL = "http://localhost/reeed"
 const extra = Constants.expoConfig?.extra ?? {}
 const GOOGLE_BOOKS_API_BASE_URL = extra.GOOGLE_BOOKS_API_BASE_URL
 const GOOGLE_BOOKS_API_KEY = extra.GOOGLE_BOOKS_API_KEY
 const API_BASE_URL = extra.API_BASE_URL
-
-const userId = 1
 
 type BookResult = {
   id: string
@@ -26,34 +27,42 @@ export default function LibraryScreen() {
   const [loading, setLoading] = useState(true)
   const [bookDetails, setBookDetails] = useState([])
 
-  useEffect(() => {
-    //retrieving bookIds from the userBook table in db
-    const fetchData = async () => {
-      try {
-        setLoading(true)
+  useFocusEffect(
+    useCallback(() => {
+      fetchData()
+    }, [])
+  )
 
-        // 1️⃣ Fetch my book list  from your DB
+  const fetchData = async () => {
+    try {
+      setLoading(true)
 
-        const response = await fetch(
-          `http://localhost/reeed/getLibraryBooks.php?userId=${userId}`
-        )
+      const User = auth.currentUser
+      const fireId = User?.uid
+      const getUserId = `${BASE_URL}/getUserId.php?fireId=${fireId}`
 
-        if (!response) {
-          throw new Error("Network Error was no ok ")
-        }
+      const userIdRes = await fetch(getUserId)
+      const dbId = await userIdRes.json()
+      const dbUserId = dbId.uId
+      // 1️⃣ Fetch my book list  from your DB
 
-        const jsonData = await response.json()
-        setBookDetails(jsonData)
-        console.log(jsonData)
-        setLoading(false)
-      } catch (error) {
-        console.error(error)
-      } finally {
-        setLoading(false)
+      const response = await fetch(
+        `http://localhost/reeed/getLibraryBooks.php?userId=${dbUserId}`
+      )
+
+      if (!response) {
+        throw new Error("Network Error was no ok ")
       }
+
+      const jsonData = await response.json()
+      setBookDetails(jsonData)
+      setLoading(false)
+    } catch (error) {
+      console.error(error)
+    } finally {
+      setLoading(false)
     }
-    fetchData()
-  }, [])
+  }
 
   // Convert library books to BookBox format
   const bookBoxData = bookDetails.map((b) => ({
@@ -91,10 +100,7 @@ export default function LibraryScreen() {
       {bookDetails.length > 0 ? (
         <BookBox books={bookDetails} onPressBook={openBook} />
       ) : (
-        <ScrollView
-          style={styles.emptyContainer}
-          contentContainerStyle={styles.emptyContent}
-        >
+        <View>
           <Text style={styles.emptyText}>
             Your library is empty. Upload a book to get started!
           </Text>
@@ -104,7 +110,7 @@ export default function LibraryScreen() {
               <Text style={styles.uploadButtonText}>Upload Book</Text>
             </TouchableOpacity>
           </Link>
-        </ScrollView>
+        </View>
       )}
     </SafeAreaView>
   )
@@ -120,8 +126,8 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#333",
     paddingHorizontal: 20,
-    marginTop: 10,
-    marginBottom: 10,
+    marginTop: -20,
+    marginBottom: 5,
   },
   listContent: {
     paddingHorizontal: 20,
