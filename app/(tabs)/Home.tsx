@@ -4,7 +4,6 @@ import { router } from "expo-router"
 import React, { useEffect, useState } from "react"
 import {
   ActivityIndicator,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -13,10 +12,10 @@ import {
 } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { auth } from "../../firebaseConfig"
-const BASE_URL = 
-Platform.OS == "web"
-? "http://localhost/reeed"
-: 'http://172.20.10.7/reeed' 
+const BASE_URL =
+//Platform.OS == "web"?
+"http://localhost/reeed"
+//: 'http://192.168.100.8/reeed'
 
 // Colors
 const PRIMARY_COLOR = "#0a7ea4"
@@ -84,9 +83,8 @@ export default function DashboardScreen({
         setLoading(true)
         setError("")
 
-        const User =  auth.currentUser
-        const fireId =  User?.uid
-        console.log(User?.uid)
+        const User = auth.currentUser
+        const fireId = User?.uid
         const getUserId = `${BASE_URL}/getUserId.php?fireId=${fireId}`
 
         const userIdRes = await fetch(getUserId)
