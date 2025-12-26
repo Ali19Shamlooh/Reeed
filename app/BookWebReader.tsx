@@ -1,7 +1,15 @@
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React from "react";
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
+import React, { useState } from "react";
+import {
+  ActivityIndicator,
+  Modal,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { WebView } from "react-native-webview";
 
@@ -12,6 +20,9 @@ const PRIMARY_COLOR = "#0a7ea4";
 export default function BookWebReader() {
   const router = useRouter();
   const { url, title } = useLocalSearchParams<{ url: string; title?: string }>();
+
+  const [showPopup, setShowPopup] = useState(false);
+  const [pageNumber, setPageNumber] = useState("");
 
   if (!url) {
     return (
@@ -26,6 +37,21 @@ export default function BookWebReader() {
     );
   }
 
+  const onFinishReading = () => {
+    setPageNumber("");
+    setShowPopup(true);
+  };
+
+  const savePageNumber = () => {
+    if (!pageNumber.trim()) return;
+
+    // ✅ Later connect to DB
+    console.log("Stopped at page:", pageNumber);
+
+    setShowPopup(false);
+    router.back();
+  };
+
   return (
     <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
       {/* Header */}
@@ -34,10 +60,15 @@ export default function BookWebReader() {
           <FontAwesome name="chevron-left" size={18} color={TEXT_COLOR} />
           <Text style={styles.headerBackText}>Back</Text>
         </Pressable>
+
         <Text style={styles.headerTitle} numberOfLines={1}>
           {title ?? "Reader"}
         </Text>
-        <View style={{ width: 60 }} />
+
+        {/* ✅ Finish Button */}
+        <Pressable onPress={onFinishReading} style={styles.finishBtn}>
+          <Text style={styles.finishBtnText}>Finish</Text>
+        </Pressable>
       </View>
 
       {/* WebView */}
@@ -51,12 +82,46 @@ export default function BookWebReader() {
           </View>
         )}
       />
+
+      {/* ✅ Popup */}
+      <Modal transparent visible={showPopup} animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>Finish Reading</Text>
+            <Text style={styles.modalText}>
+              Enter the page number you stopped at
+            </Text>
+
+            <TextInput
+              value={pageNumber}
+              onChangeText={setPageNumber}
+              keyboardType="number-pad"
+              placeholder="e.g. 45"
+              style={styles.input}
+            />
+
+            <View style={styles.modalRow}>
+              <Pressable
+                onPress={() => setShowPopup(false)}
+                style={styles.cancelBtn}
+              >
+                <Text style={styles.cancelText}>Cancel</Text>
+              </Pressable>
+
+              <Pressable onPress={savePageNumber} style={styles.saveBtn}>
+                <Text style={styles.saveText}>Save</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: BACKGROUND_COLOR },
+
   header: {
     height: 52,
     backgroundColor: BACKGROUND_COLOR,
@@ -69,11 +134,72 @@ const styles = StyleSheet.create({
   },
   headerBack: { flexDirection: "row", alignItems: "center", gap: 6 },
   headerBackText: { color: TEXT_COLOR, fontSize: 15, fontWeight: "500" },
-  headerTitle: { flex: 1, textAlign: "center", color: TEXT_COLOR, fontWeight: "700" },
+  headerTitle: {
+    flex: 1,
+    textAlign: "center",
+    fontWeight: "700",
+    color: TEXT_COLOR,
+  },
+
+  finishBtn: {
+    backgroundColor: PRIMARY_COLOR,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+  },
+  finishBtnText: { color: "#fff", fontWeight: "700", fontSize: 12 },
+
   loadingOverlay: { flex: 1, alignItems: "center", justifyContent: "center" },
   loadingText: { marginTop: 10, color: "#6B7280" },
-  center: { flex: 1, justifyContent: "center", alignItems: "center", padding: 20 },
-  error: { color: TEXT_COLOR, fontSize: 14, marginBottom: 12 },
-  backBtn: { backgroundColor: PRIMARY_COLOR, paddingHorizontal: 14, paddingVertical: 10, borderRadius: 10 },
+
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.4)",
+    justifyContent: "center",
+    padding: 20,
+  },
+  modalCard: {
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    padding: 16,
+  },
+  modalTitle: { fontSize: 16, fontWeight: "800", color: TEXT_COLOR },
+  modalText: { fontSize: 13, color: "#6B7280", marginTop: 6 },
+
+  input: {
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginTop: 12,
+  },
+
+  modalRow: { flexDirection: "row", gap: 10, marginTop: 14 },
+  cancelBtn: {
+    flex: 1,
+    backgroundColor: "#F3F4F6",
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: "center",
+  },
+  saveBtn: {
+    flex: 1,
+    backgroundColor: PRIMARY_COLOR,
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: "center",
+  },
+  cancelText: { fontWeight: "700", color: TEXT_COLOR },
+  saveText: { fontWeight: "700", color: "#fff" },
+
+  center: { flex: 1, alignItems: "center", justifyContent: "center" },
+  error: { color: TEXT_COLOR, marginBottom: 12 },
+  backBtn: {
+    backgroundColor: PRIMARY_COLOR,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 10,
+  },
   backBtnText: { color: "#fff", fontWeight: "700" },
 });

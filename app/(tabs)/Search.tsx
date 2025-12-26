@@ -82,7 +82,7 @@ export default function SearchTabScreen() {
 
   // ✅ USERS from MySQL (php)
   const searchUsers = async (q: string) => {
-    const url = `${PHP_BASE_URL}/searchUsers.php?q=${encodeURIComponent(q)}`;
+    const url = `${API_BASE_URL}/searchUsers.php?q=${encodeURIComponent(q)}`;
 
     const res = await fetch(url);
     if (!res.ok) throw new Error("Users API failed");
