@@ -152,7 +152,7 @@ export default function ReviewsTabScreen() {
         style={styles.myReviewsButton}
         onPress={() => router.push("/MyReviews")}
       >
-        <Text style={styles.myReviewsButtonText}>View My Reviews Only</Text>
+        <Text style={styles.myReviewsButtonText}>Moderate Reviews</Text>
       </Pressable>
 
       {/* ✅ NEW: Write Review Button */}

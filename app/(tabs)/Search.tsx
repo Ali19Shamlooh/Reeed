@@ -129,7 +129,6 @@ export default function SearchTabScreen() {
   };
 
   const openUser = (u: UserResult) => {
-    // make sure you have: app/userdetails.tsx
     router.push({ pathname: "/userdetails", params: { id: u.id } });
   };
 

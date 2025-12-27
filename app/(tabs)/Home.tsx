@@ -16,7 +16,7 @@ import { auth } from "../../firebaseConfig"
 const BASE_URL = 
 Platform.OS == "web"
 ? "http://localhost/reeed"
-: 'http://192.168.100.8/reeed'
+: 'http://172.20.10.7/reeed' 
 
 // Colors
 const PRIMARY_COLOR = "#0a7ea4"
@@ -75,10 +75,8 @@ export default function DashboardScreen({
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
 
-  // ✅ now these are OBJECTS, not strings
   const [statics, setStatics] = useState<FinishedBooksResponse | null>(null)
-  const [lastSessionData, setLastSessionData] =
-    useState<LastSessionResponse | null>(null)
+  const [lastSessionData, setLastSessionData] = useState<LastSessionResponse | null>(null)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -92,6 +90,8 @@ export default function DashboardScreen({
         const getUserId = `${BASE_URL}/getUserId.php?fireId=${fireId}`
 
         const userIdRes = await fetch(getUserId)
+         if (!userIdRes.ok) throw new Error("Failed to load user ID")
+
         const dbId = await userIdRes.json()
         const dbUserId = dbId.uId
 

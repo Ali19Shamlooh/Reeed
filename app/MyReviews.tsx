@@ -1,13 +1,13 @@
-// app/myReviews.tsx
+// app/reportedReviews.tsx
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { useRouter } from "expo-router";
 import React from "react";
 import {
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
 
 const PRIMARY_COLOR = "#0a7ea4";
@@ -18,36 +18,39 @@ type ReviewItem = {
   id: number | string;
   bookTitle: string;
   bookAuthor: string;
-  rating: number; // 1–5
+  rating: number;
   reviewText: string;
-  timestamp: string; // e.g. "2025-02-01"
-  // later you can add: userId, userName if needed
+  timestamp: string;
+  reportedByMe: boolean;
 };
 
-// 🔹 Dummy data — pretend these are ONLY this user’s reviews
-const myDummyReviews: ReviewItem[] = [
+// 🔹 Dummy data — ONLY reported reviews
+const reportedDummyReviews: ReviewItem[] = [
   {
     id: 1,
     bookTitle: "The Alchemist",
     bookAuthor: "Paulo Coelho",
     rating: 5,
-    reviewText: "Beautiful story with deep meaning and inspiration.",
+    reviewText: "This review contains inappropriate content.",
     timestamp: "2025-02-01",
+    reportedByMe: true,
   },
   {
     id: 2,
     bookTitle: "Atomic Habits",
     bookAuthor: "James Clear",
     rating: 4,
-    reviewText:
-      "Very practical and easy to follow. Helped me build better habits.",
-    timestamp: "2025-01-20",
+    reviewText: "Spam-like review with unrelated links.",
+    timestamp: "2025-01-22",
+    reportedByMe: true,
   },
 ];
 
-export default function MyReviewsScreen() {
+export default function ReportedReviewsScreen() {
   const router = useRouter();
-  const reviews = myDummyReviews;
+
+  // ✅ filter just in case (future-safe)
+  const reviews = reportedDummyReviews.filter((r) => r.reportedByMe);
 
   return (
     <ScrollView
@@ -68,9 +71,9 @@ export default function MyReviewsScreen() {
 
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>My Reviews</Text>
+        <Text style={styles.title}>Reported Reviews</Text>
         <Text style={styles.subtitle}>
-          These are the reviews you have written in Reeed.
+          Reviews you have reported for moderation.
         </Text>
       </View>
 
@@ -78,14 +81,14 @@ export default function MyReviewsScreen() {
       {reviews.length === 0 && (
         <View style={styles.emptyCard}>
           <FontAwesome
-            name="star-o"
+            name="flag-o"
             size={28}
             color={PRIMARY_COLOR}
             style={{ marginBottom: 8 }}
           />
-          <Text style={styles.emptyTitle}>You haven’t reviewed any books yet</Text>
+          <Text style={styles.emptyTitle}>No reported reviews</Text>
           <Text style={styles.emptyText}>
-            Start reading a book and leave your first review to see it here.
+            You haven’t reported any reviews yet.
           </Text>
         </View>
       )}
@@ -112,7 +115,15 @@ export default function MyReviewsScreen() {
           </View>
 
           <Text style={styles.reviewText}>{review.reviewText}</Text>
-          <Text style={styles.dateText}>Reviewed on {review.timestamp}</Text>
+          <Text style={styles.dateText}>
+            Reported on {review.timestamp}
+          </Text>
+
+          {/* Status badge */}
+          <View style={styles.reportedBadge}>
+            <FontAwesome name="flag" size={12} color="#ef4444" />
+            <Text style={styles.reportedText}>Reported</Text>
+          </View>
         </View>
       ))}
     </ScrollView>
@@ -129,7 +140,6 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
 
-  // 🔙 Back button styles (same pattern as other pages)
   backButton: {
     flexDirection: "row",
     alignItems: "center",
@@ -197,6 +207,18 @@ const styles = StyleSheet.create({
     color: "#9CA3AF",
   },
 
+  reportedBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginTop: 6,
+  },
+  reportedText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#ef4444",
+  },
+
   emptyCard: {
     backgroundColor: "#FFFFFF",
     borderRadius: 16,
@@ -204,11 +226,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: 10,
     marginBottom: 16,
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
   },
   emptyTitle: {
     fontSize: 16,

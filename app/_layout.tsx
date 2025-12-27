@@ -1,21 +1,74 @@
 import { SplashScreen, Stack } from "expo-router"
 import { onAuthStateChanged } from "firebase/auth"
 import React, { useEffect, useState } from "react"
-import { ActivityIndicator, View } from "react-native"
+import { ActivityIndicator, Platform, View } from "react-native"
 import { auth } from "../firebaseConfig"
 
+// ✅ Notifications
+import * as Notifications from "expo-notifications"
+
 SplashScreen.preventAutoHideAsync()
+
+// ✅ Show notifications even when app is open
+Notifications.setNotificationHandler({
+  handleNotification: async () => {
+    return {
+      shouldShowAlert: true,
+      shouldPlaySound: false,
+      shouldSetBadge: false,
+    }
+  },
+})
+
 
 function RootLayout() {
   const [isAuthReady, setIsAuthReady] = useState(false)
 
+  // ✅ Fast & easy daily reminder
+  const setupDailyReadingReminder = async () => {
+    try {
+      const permission = await Notifications.requestPermissionsAsync()
+      if (permission.status !== "granted") return
+
+      // Android needs channel
+      if (Platform.OS === "android") {
+        await Notifications.setNotificationChannelAsync("default", {
+          name: "default",
+          importance: Notifications.AndroidImportance.DEFAULT,
+        })
+      }
+
+      // Prevent duplicate notifications
+      await Notifications.cancelAllScheduledNotificationsAsync()
+
+      // ⏰ Every day at 9 PM
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: "Reading Goal 📚",
+          body: "You haven't completed your reading goal today.",
+        },
+        trigger: {
+          hour: 21,
+          minute: 0,
+          repeats: true,
+        },
+      })
+    } catch (e) {
+      console.log("Notification error:", e)
+    }
+  }
+
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (!isAuthReady) {
+        // ✅ schedule reminder once after login
+        await setupDailyReadingReminder()
+
         SplashScreen.hideAsync()
         setIsAuthReady(true)
       }
     })
+
     return () => unsubscribe()
   }, [])
 
@@ -35,8 +88,6 @@ function RootLayout() {
   }
 
   return (
-    // FIX: Apply 'headerShown: false' globally to screenOptions.
-    // This removes the native header bar from ALL screens in the stack.
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="index" />
       <Stack.Screen name="(tabs)" />

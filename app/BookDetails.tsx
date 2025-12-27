@@ -18,7 +18,7 @@ import { auth } from "../firebaseConfig";
 
 // ✅ Use ONE base URL for all your PHP calls (PC IP for iPhone)
 // Make sure this matches your folder name exactly (reeed vs REEED)
-const BASE_URL = "http://192.168.100.8/reeed";
+const BASE_URL = "http://172.20.10.7/reeed";
 
 // Expo extra (Google Books)
 const extra = Constants.expoConfig?.extra ?? {};
@@ -104,6 +104,15 @@ export default function BookDetailsScreen() {
     loadBook();
   }, [id]);
 
+   const getMysqlDateTime = () => {
+    return new Date()
+    .toISOString()
+    .slice(0, 19)
+    .replace("T", " ");
+  };
+
+  const stime  = getMysqlDateTime();
+
   const openReader = () => {
     if (!book) return;
 
@@ -115,7 +124,7 @@ export default function BookDetailsScreen() {
 
     router.push({
       pathname: "/BookWebReader",
-      params: { url, title: book.title },
+      params: { url, title: book.title, bookId:book.id , start_time: stime },
     });
   };
 

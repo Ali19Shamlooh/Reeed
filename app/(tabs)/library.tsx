@@ -10,7 +10,7 @@ import BookBox from "../components/BookBox";
 import { View } from "@/components/Themed";
 import Constants from "expo-constants";
 
-const BASE_URL = "http://192.168.100.8/reeed"; // ✅ your PC IP + folder
+const BASE_URL = "http://172.20.10.7/reeed"; // ✅ your PC IP + folder
 
 const extra = Constants.expoConfig?.extra ?? {};
 const GOOGLE_BOOKS_API_BASE_URL = extra.GOOGLE_BOOKS_API_BASE_URL;
@@ -91,12 +91,6 @@ export default function LibraryScreen() {
       // 2) Fetch library books
       const libraryUrl = `${BASE_URL}/getLibraryBooks.php?userId=${dbUserId}`;
       const jsonData = await fetchJson(libraryUrl);
-
-      if (!res.ok) {
-        throw new Error("Network Error was no ok ")
->>>>>>> main
-      }
-
 
       if (!dbUserId) {
         setBookDetails([]);

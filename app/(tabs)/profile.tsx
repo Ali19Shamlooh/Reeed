@@ -19,7 +19,7 @@ import { SafeAreaView } from "react-native-safe-area-context"
 import { auth, db } from "../../firebaseConfig"
 
 import Constants from "expo-constants"
-const BASE_URL = "http://localhost/reeed"
+const BASE_URL = "http://172.20.10.7/reeed"
 const extra = Constants.expoConfig?.extra ?? {}
 const GOOGLE_BOOKS_API_BASE_URL = extra.GOOGLE_BOOKS_API_BASE_URL
 const GOOGLE_BOOKS_API_KEY = extra.GOOGLE_BOOKS_API_KEY
@@ -134,7 +134,7 @@ export default function ProfileScreen() {
     setGoalModalVisible(true)
   }
 
-  // ✅ Save goal locally (and optionally Firestore)
+  // ✅ Save goal locally 
   const saveGoal = async () => {
     const num = Number(goalInput)
 
