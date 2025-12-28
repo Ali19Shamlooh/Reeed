@@ -92,14 +92,8 @@ export default function LibraryScreen() {
       }
 
       // 2) Fetch library books
-      const libraryUrl = `${BASE_URL}/getLibraryBooks.php?userId=${dbUserId}`;
-      const jsonData = await fetchJson(libraryUrl);
-
-      if (!dbUserId) {
-        setBookDetails([]);
-        Alert.alert("Error", "User id not found in database.");
-        return;
-      }
+      const libraryUrl = `${BASE_URL}/getLibraryBooks.php?userId=${dbUserId}`
+      const jsonData = await fetchJson(libraryUrl)
 
       // If your PHP returns { error: "..." }
       if (jsonData?.error) {
