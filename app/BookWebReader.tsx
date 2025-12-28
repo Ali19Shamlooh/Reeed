@@ -15,10 +15,10 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { WebView } from "react-native-webview";
 import { auth } from "../firebaseConfig";
-const BASE_URL = 
-Platform.OS == "web"
-? "http://localhost/reeed"
-: 'http://172.20.10.7/reeed' 
+const BASE_URL =
+//Platform.OS == "web"?
+"http://localhost/reeed"
+//: 'http://172.20.10.7/reeed'
 
 const BACKGROUND_COLOR = "#F9FAFB";
 const TEXT_COLOR = "#1F2937";
@@ -64,7 +64,7 @@ export default function BookWebReader() {
       return null;
     }
   };
-  
+
   const onFinishReading = () => {
     setPageNumber("");
     setShowPopup(true);
@@ -92,25 +92,25 @@ export default function BookWebReader() {
             router.push("/login"); // change route if yours is different
             return;
           }
-    
+
           // ✅ get DB uId using firebase uid
           const getUserIdUrl = `${BASE_URL}/getUserId.php?fireId=${encodeURIComponent(user.uid)}`;
           console.log("getUserIdUrl:", getUserIdUrl);
-    
+
           const userIdRes = await fetch(getUserIdUrl);
           const userIdText = await userIdRes.text();
           console.log("getUserId status:", userIdRes.status);
           console.log("getUserId raw:", userIdText);
-    
+
           const dbId = safeJson(userIdText);
           const dbUserId = dbId?.uId;
-    
+
           if (!userIdRes.ok || !dbUserId) {
             throw new Error(dbId?.error || "User id not found in database.");
           }
-    
-       
-    
+
+
+
           const insertUrl =
             `${BASE_URL}/addreadinglog.php?` +
             `&startingtime=${encodeURIComponent(String(startingtime))}` +
@@ -118,24 +118,24 @@ export default function BookWebReader() {
             `&pageNumber=${encodeURIComponent(pageNumber)}` +
             `&googleId=${encodeURIComponent(bookId)}` +
             `&userId=${encodeURIComponent(String(dbUserId))}` ;
-    
+
           console.log("insertUrl:", insertUrl);
-    
+
           const res = await fetch(insertUrl);
           const text = await res.text();
           console.log("insert status:", res.status);
           console.log("insert raw:", text);
-    
+
           const data = safeJson(text);
-    
+
           if (!res.ok) {
             throw new Error(data?.error || "Request failed (addreadinglog.php).");
           }
-    
+
           if (data?.error) {
             throw new Error(data.error);
           }
-    
+
           Alert.alert("Saved", `Readig Book "${title}" log saved successfully as well as bookmark`);
           console.log(data)
         } catch (error: any) {
@@ -158,7 +158,7 @@ export default function BookWebReader() {
         <Text style={styles.headerTitle} numberOfLines={1}>
           {title ?? "Reader"}
         </Text>
-        
+
 
         {/* ✅ Finish Button */}
         <Pressable onPress={onFinishReading} style={styles.finishBtn}>
