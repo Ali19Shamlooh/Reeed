@@ -1,7 +1,8 @@
 import { Ionicons } from "@expo/vector-icons"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import { Stack, router } from "expo-router"
-import { doc, getDoc } from "firebase/firestore"
+import { updateProfile } from "firebase/auth"
+import { doc, getDoc, updateDoc } from "firebase/firestore"
 import React, { useEffect, useState } from "react"
 import {
   ActivityIndicator,
@@ -174,7 +175,6 @@ export default function ProfileScreen() {
     if (!user) return
 
     const trimmed = nameInput.trim()
-
     if (trimmed.length < 2) {
       Alert.alert("Invalid name", "Name must be at least 2 characters.")
       return
@@ -183,18 +183,22 @@ export default function ProfileScreen() {
     try {
       setSavingName(true)
 
-      console.log(uId)
+      // 1️⃣ Update MySQL (your backend)
       const response = await fetch(
         `${BASE_URL}/UpdateUserName.php?uId=${uId}&newName=${trimmed}`
       )
-
       const data = await response.json()
+      if (!data.success) throw new Error("Backend update failed")
 
-      if (!data.success) {
-        throw new Error(data.message || "Update failed")
-      }
+      // 2️⃣ Update Firebase Auth
+      await updateProfile(user, { displayName: trimmed })
 
-      // ✅ Update UI immediately
+      // 3️⃣ Update Firestore
+      await updateDoc(doc(db, "users", user.uid), {
+        name: trimmed,
+      })
+
+      // 4️⃣ Update UI
       setProfile((prev) => (prev ? { ...prev, name: trimmed } : prev))
 
       setNameModalVisible(false)
