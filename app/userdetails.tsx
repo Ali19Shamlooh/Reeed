@@ -15,14 +15,12 @@ const PRIMARY_COLOR = "#0a7ea4";
 const BACKGROUND_COLOR = "#F9FAFB";
 const TEXT_COLOR = "#1F2937";
 
-/* =========================
-   DEMO DATA
-========================= */
 
-const demoUser = {
+
+const User = {
   userId: "2",
-  name: "Ahmed Ali",
-  email: "ahmed@example.com",
+  name: "Hasan Taleb",
+  email: "Hasan@gmail.com",
   type: "User",
 };
 
@@ -81,9 +79,9 @@ export default function UserDetailsScreen() {
           <View style={styles.profileRow}>
             <FontAwesome name="user-circle" size={60} color={PRIMARY_COLOR} />
             <View style={{ marginLeft: 14 }}>
-              <Text style={styles.name}>{demoUser.name}</Text>
-              <Text style={styles.email}>{demoUser.email}</Text>
-              <Text style={styles.role}>{demoUser.type.toUpperCase()}</Text>
+              <Text style={styles.name}>{User.name}</Text>
+              <Text style={styles.email}>{User.email}</Text>
+              <Text style={styles.role}>{User.type.toUpperCase()}</Text>
             </View>
           </View>
         </View>

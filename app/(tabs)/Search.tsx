@@ -10,16 +10,15 @@ import {
   Text,
   TextInput,
   View,
-} from "react-native"
-import { SafeAreaView } from "react-native-safe-area-context"
-import BookBox from "../components/BookBox"
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import BookBox from "../components/BookBox";
 
 const PRIMARY_COLOR = "#0a7ea4";
 const BACKGROUND_COLOR = "#F9FAFB";
 const TEXT_COLOR = "#1F2937";
 
-// ✅ change this
-const API_BASE_URL = "http://192.168.100.6/reeed/"
+const API_BASE_URL = "http://192.168.100.6/reeed"
 
 type Mode = "title" | "author" | "users";
 
