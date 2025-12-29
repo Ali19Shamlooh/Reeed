@@ -4,6 +4,7 @@ import { router } from "expo-router"
 import React, { useEffect, useState } from "react"
 import {
   ActivityIndicator,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -13,9 +14,9 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context"
 import { auth } from "../../firebaseConfig"
 const BASE_URL =
-//Platform.OS == "web"?
+Platform.OS == "web"?
 "http://localhost/reeed"
-//: 'http://192.168.100.8/reeed'
+: 'http://10.60.11.1/reeed'
 
 // Colors
 const PRIMARY_COLOR = "#0a7ea4"
@@ -333,7 +334,7 @@ export default function DashboardScreen({
           ))}
 
           <Pressable
-            onPress={() => router.push("/notifications")}
+            onPress={() => router.push("/Notification")}
             style={{ marginTop: 6 }}
           >
             <Text style={{ color: PRIMARY_COLOR, fontWeight: "600" }}>

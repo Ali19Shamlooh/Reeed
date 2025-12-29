@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -19,10 +20,8 @@ import { auth } from "../firebaseConfig"
 // ✅ Use ONE base URL for all your PHP calls (PC IP for iPhone)
 // Make sure this matches your folder name exactly (reeed vs REEED)
 const BASE_URL =
-  // Platform.OS == "web" ?
-  "http://localhost/reeed"
-// : 'http://192.168.100.8/reeed'
-// Expo extra (Google Books)
+  Platform.OS == "web" ? "http://localhost/reeed" : "http://10.60.11.1/reeed"
+
 const extra = Constants.expoConfig?.extra ?? {}
 const GOOGLE_BOOKS_API_BASE_URL = extra.GOOGLE_BOOKS_API_BASE_URL
 const GOOGLE_BOOKS_API_KEY = extra.GOOGLE_BOOKS_API_KEY
@@ -50,7 +49,10 @@ type BookDetails = {
   previewLink?: string | null
   webReaderLink?: string | null
 }
-
+type Category = {
+  id: number
+  name: string
+}
 export default function BookDetailsScreen() {
   const router = useRouter()
   const { id } = useLocalSearchParams<{ id: string }>()
@@ -59,6 +61,8 @@ export default function BookDetailsScreen() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const [book, setBook] = useState<BookDetails | null>(null)
 
+  const [categories, setCategories] = useState<Category[]>([])
+  let bookId
   useEffect(() => {
     if (!id) return
 
@@ -91,8 +95,8 @@ export default function BookDetailsScreen() {
           description: info.description ?? "No description available.",
           thumbnail: thumb?.replace("http://", "https://") ?? null,
           categories: info.categories?.join(", ") ?? "N/A",
-          pageCount: info.pageCount,
-          publishedDate: info.publishedDate,
+          pageCount: info.pageCount ?? "N/A",
+          publishedDate: info.publishedDate ?? "N/A",
           isbn13,
           previewLink: info.previewLink ?? null,
           webReaderLink: data.accessInfo?.webReaderLink ?? null,
@@ -105,17 +109,15 @@ export default function BookDetailsScreen() {
       }
     }
 
-    loadBook();
-  }, [id]);
+    loadBook()
+    fetchCategories()
+  }, [id])
 
-   const getMysqlDateTime = () => {
-    return new Date()
-    .toISOString()
-    .slice(0, 19)
-    .replace("T", " ");
-  };
+  const getMysqlDateTime = () => {
+    return new Date().toISOString().slice(0, 19).replace("T", " ")
+  }
 
-  const stime  = getMysqlDateTime();
+  const stime = getMysqlDateTime()
 
   const openReader = () => {
     if (!book) return
@@ -128,9 +130,9 @@ export default function BookDetailsScreen() {
 
     router.push({
       pathname: "/BookWebReader",
-      params: { url, title: book.title, bookId:book.id , start_time: stime },
-    });
-  };
+      params: { url, title: book.title, bookId: book.id, start_time: stime },
+    })
+  }
 
   // ✅ safer JSON helper
   const safeJson = (text: string) => {
@@ -210,7 +212,77 @@ export default function BookDetailsScreen() {
       )
     }
   }
+  const fetchCategories = async () => {
+    const user = auth.currentUser
+    if (!user?.uid) return
 
+    const userIdRes = await fetch(
+      `${BASE_URL}/getUserId.php?fireId=${encodeURIComponent(user.uid)}`
+    )
+    const dbId = await userIdRes.json()
+    const dbUserId = dbId?.uId
+    if (!dbUserId) return
+
+    const res = await fetch(
+      `${BASE_URL}/getUserCategories.php?userId=${dbUserId}`
+    )
+    const data = await res.json()
+
+    // Extract categories array
+    if (data?.success && Array.isArray(data.categories)) {
+      setCategories(data.categories)
+    }
+  }
+
+  const assignToCategory = async () => {
+    if (!book) return
+
+    // Ensure book is in library first
+    const assignedBookId = book.bookId ?? (await addToLibrary())
+    if (!assignedBookId) return
+
+    await fetchCategories()
+
+    if (categories.length === 0) {
+      Alert.alert("No Categories", "Please create a category first.")
+      return
+    }
+
+    Alert.alert(
+      "Assign to Category",
+      "Choose a category",
+      categories.map((c) => ({
+        text: c.name,
+        onPress: async () => {
+          try {
+            const user = auth.currentUser
+            if (!user?.uid) return
+
+            const userIdRes = await fetch(
+              `${BASE_URL}/getUserId.php?fireId=${encodeURIComponent(user.uid)}`
+            )
+            const dbId = await userIdRes.json()
+            const dbUserId = dbId?.uId
+
+            const url =
+              `${BASE_URL}/assignBookToCategory.php?` +
+              `userId=${dbUserId}` +
+              `&bookId=${assignedBookId}` +
+              `&categoryId=${c.id}`
+
+            const res = await fetch(url)
+            const data = await res.json()
+
+            if (!res.ok || data?.error) throw new Error(data?.error || "Failed")
+
+            Alert.alert("Success", `Assigned to "${c.name}"`)
+          } catch (e: any) {
+            Alert.alert("Error", e.message)
+          }
+        },
+      }))
+    )
+  }
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.container}>
@@ -297,6 +369,12 @@ export default function BookDetailsScreen() {
               }
             >
               <Text style={styles.secondaryButtonText}>See Reviews</Text>
+            </Pressable>
+            <Pressable
+              style={styles.secondaryButton}
+              onPress={assignToCategory}
+            >
+              <Text style={styles.secondaryButtonText}>Assign to Category</Text>
             </Pressable>
           </>
         )}

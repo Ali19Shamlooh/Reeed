@@ -23,7 +23,6 @@ type NotificationItem = {
   timestamp: string;
 };
 
-// 🔔 Dummy notifications – you can replace with real DB data later
 const dummyNotifications: NotificationItem[] = [
   {
     id: 1,

@@ -9,6 +9,7 @@ import {
   Alert,
   Button,
   Modal,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -21,9 +22,9 @@ import { auth, db } from "../../firebaseConfig"
 
 import Constants from "expo-constants"
 const BASE_URL =
-  // Platform.OS == "web" ?
+  Platform.OS == "web" ?
   "http://localhost/reeed"
-// : 'http://192.168.100.8/reeed'
+: 'http://10.60.11.1/reeed'
 const extra = Constants.expoConfig?.extra ?? {}
 const GOOGLE_BOOKS_API_BASE_URL = extra.GOOGLE_BOOKS_API_BASE_URL
 const GOOGLE_BOOKS_API_KEY = extra.GOOGLE_BOOKS_API_KEY

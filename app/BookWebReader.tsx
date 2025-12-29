@@ -16,9 +16,9 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { WebView } from "react-native-webview";
 import { auth } from "../firebaseConfig";
 const BASE_URL =
-//Platform.OS == "web"?
+Platform.OS == "web"?
 "http://localhost/reeed"
-//: 'http://172.20.10.7/reeed'
+: 'http://10.60.11.1/reeed'
 
 const BACKGROUND_COLOR = "#F9FAFB";
 const TEXT_COLOR = "#1F2937";

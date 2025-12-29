@@ -5,6 +5,7 @@ import {
   ActivityIndicator,
   Alert,
   Button,
+  Platform,
   StyleSheet,
   Text,
   TextInput,
@@ -12,6 +13,9 @@ import {
   View,
 } from "react-native"
 import { auth, db } from "../../firebaseConfig"
+
+const BASE_URL =
+  Platform.OS === "web" ? "http://localhost/reeed" : "http://10.60.11.1/reeed"
 
 interface RegisterComponentProps {
   onSwitchToLogin: () => void
@@ -59,6 +63,7 @@ export default function RegisterComponent({
 
       await updateProfile(user, { displayName: name })
 
+      // Firestore
       await setDoc(doc(db, "users", user.uid), {
         name: name,
         email: email,
@@ -67,6 +72,17 @@ export default function RegisterComponent({
         totalBooksRead: 0,
         createdAt: new Date().toISOString(),
       })
+
+      // ✅ Add user to MySQL
+      const mysqlRes = await fetch(
+        `${BASE_URL}/addUserToMysql.php?userId=${encodeURIComponent(
+          user.uid
+        )}&email=${encodeURIComponent(
+          email
+        )}&type=normal&fullName=${encodeURIComponent(name)}`
+      )
+      const mysqlData = await mysqlRes.json()
+      console.log("MySQL API response:", mysqlData)
 
       Alert.alert("Success", `Welcome, ${name}! Your account is ready.`)
     } catch (firebaseError: any) {
